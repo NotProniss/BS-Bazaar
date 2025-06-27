@@ -8,6 +8,8 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 app.set('trust proxy', true);
@@ -132,6 +134,7 @@ app.post('/listings', authenticateJWT, async (req, res) => {
       Date.now()
     );
     const listing = await db.get('SELECT * FROM listings WHERE id = ?', stmt.lastID);
+    io.emit('listingCreated', listing); // Emit event
     res.json({ success: true, listing });
   } catch (err) {
     console.error('Error inserting listing into DB:', err);
@@ -153,6 +156,7 @@ app.put('/listings/:id', authenticateJWT, async (req, res) => {
       item, price, quantity, type, category, req.params.id
     );
     const updated = await db.get('SELECT * FROM listings WHERE id = ?', req.params.id);
+    io.emit('listingUpdated', updated); // Emit event
     res.json({ success: true, listing: updated });
   } catch (err) {
     console.error('Error updating listing in DB:', err);
@@ -167,6 +171,7 @@ app.delete('/listings/:id', authenticateJWT, async (req, res) => {
     if (listing.sellerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
     await db.run('DELETE FROM listings WHERE id = ?', req.params.id);
+    io.emit('listingDeleted', Number(req.params.id)); // Emit event
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting listing from DB:', err);
@@ -203,6 +208,23 @@ app.post('/admin/users/remove', authenticateJWT, ensureAdmin, async (req, res) =
   res.json({ success: true });
 });
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }
+});
+
+// Socket.IO connection log (optional)
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
+
 (async () => {
   db = await open({
     filename: 'marketplace.db',
@@ -230,7 +252,10 @@ app.post('/admin/users/remove', authenticateJWT, ensureAdmin, async (req, res) =
     );
   `);
 
-  app.listen(PORT, () => {
+  // Insert a default admin if not present
+  await db.run('INSERT OR IGNORE INTO admins (id) VALUES (?)', '249099315056738304');
+
+  server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 })();

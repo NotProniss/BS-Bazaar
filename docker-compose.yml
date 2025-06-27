@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./bazaar-server
+      dockerfile: Dockerfile.server
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./bazaar-server/marketplace.db:/app/marketplace.db
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./bazaar-server/.env
+
+  client:
+    build: ./bazaar-client
+    ports:
+      - "3000:80"
+    depends_on:
+      - server

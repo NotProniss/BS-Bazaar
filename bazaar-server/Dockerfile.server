@@ -1,0 +1,13 @@
+# ./bazaar-server/Dockerfile.server
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN cat package.json # Debug: show package.json contents
+RUN npm install
+
+COPY . .
+
+EXPOSE 3001
+CMD ["node", "server.js"]

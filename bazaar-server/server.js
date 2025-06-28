@@ -19,7 +19,7 @@ let db;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'https://bs-bazaar.com', // Prefer env, fallback to HTTPS
   credentials: true,
 }));
 app.use(express.json());
@@ -71,7 +71,7 @@ app.get('/auth/discord/callback',
   passport.authenticate('discord', { failureRedirect: '/auth/discord/failure' }),
   (req, res) => {
     const token = req.user.token;
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth-success?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL || 'https://bs-bazaar.com'}/auth-success?token=${token}`);
   }
 );
 
@@ -211,7 +211,7 @@ app.post('/admin/users/remove', authenticateJWT, ensureAdmin, async (req, res) =
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'https://bs-bazaar.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -256,6 +256,6 @@ io.on('connection', (socket) => {
   await db.run('INSERT OR IGNORE INTO admins (id) VALUES (?)', '249099315056738304');
 
   server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on https://bs-bazaar.com:${PORT}`);
   });
 })();

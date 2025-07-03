@@ -1,0 +1,2 @@
+# Check every hour if 25 hours have passed since last scrape
+0 * * * * /app/scripts/check_and_scrape.sh >> /var/log/cron/scrape.log 2>&1

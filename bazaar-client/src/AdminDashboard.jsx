@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://bs-bazaar.com';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 function AdminDashboard({ onRefreshListings }) {
   const [listings, setListings] = useState([]);
@@ -19,11 +19,6 @@ function AdminDashboard({ onRefreshListings }) {
     };
   };
 
-  useEffect(() => {
-    fetchListings();
-    fetchAdmins();
-  }, []);
-
   const fetchListings = () => {
     axios.get(`${BACKEND_URL}/listings`)
       .then(res => setListings(res.data))
@@ -33,7 +28,7 @@ function AdminDashboard({ onRefreshListings }) {
       });
   };
 
-  const fetchAdmins = () => {
+  const fetchAdmins = useCallback(() => {
     axios.get(`${BACKEND_URL}/admin/users`, authConfig())
       .then(res => {
         setAdmins(res.data.admins);
@@ -48,7 +43,12 @@ function AdminDashboard({ onRefreshListings }) {
           setHasError(true);
         }
       });
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchListings();
+    fetchAdmins();
+  }, [fetchAdmins]);
 
   const deleteListing = (id) => {
     axios.delete(`${BACKEND_URL}/admin/listings/${id}`, authConfig())
@@ -85,20 +85,6 @@ function AdminDashboard({ onRefreshListings }) {
       {hasError && <p style={{ color: 'red' }}>Error loading admin data.</p>}
 
       <section>
-        <h3>All Listings</h3>
-        <ul>
-          {listings.map(listing => (
-            <li key={listing.id}>
-              {listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by {listing.seller}
-              <button onClick={() => deleteListing(listing.id)} style={{ marginLeft: '1rem' }}>
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section style={{ marginTop: '2rem' }}>
         <h3>Manage Admins</h3>
         <ul>
           {admins.map(admin => (
@@ -118,6 +104,22 @@ function AdminDashboard({ onRefreshListings }) {
           onChange={(e) => setNewAdminId(e.target.value)}
         />
         <button onClick={addAdmin}>Add Admin</button>
+      </section>
+
+      <section style={{ marginTop: '2rem' }}>
+        <h3>All Listings</h3>
+        <ul>
+          {listings
+            .sort((a, b) => a.item.localeCompare(b.item))
+            .map(listing => (
+            <li key={listing.id}>
+              {listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by {listing.seller}
+              <button onClick={() => deleteListing(listing.id)} style={{ marginLeft: '1rem' }}>
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );

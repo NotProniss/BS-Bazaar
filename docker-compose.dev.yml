@@ -1,0 +1,51 @@
+services:
+  server:
+    build:
+      context: ./bazaar-server
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./bazaar-server:/app
+      - /app/node_modules
+      - ./bazaar-server/marketplace.db:/app/marketplace.db
+      - ./bazaar-server/data:/app/data
+    environment:
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:3000
+    env_file:
+      - ./bazaar-server/.env.development
+    restart: unless-stopped
+    networks:
+      - bs-bazaar-network
+
+  client:
+    build:
+      context: ./bazaar-client
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./bazaar-client:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:3001
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    env_file:
+      - ./bazaar-client/.env
+    depends_on:
+      - server
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - bs-bazaar-network
+
+networks:
+  bs-bazaar-network:
+    driver: bridge
+
+volumes:
+  node_modules_server:
+  node_modules_client:

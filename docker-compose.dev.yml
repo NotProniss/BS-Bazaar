@@ -8,7 +8,6 @@ services:
     volumes:
       - ./bazaar-server:/app
       - /app/node_modules
-      - ./bazaar-server/marketplace.db:/app/marketplace.db
       - ./bazaar-server/data:/app/data
     environment:
       - NODE_ENV=development

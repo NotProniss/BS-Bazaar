@@ -1,6 +1,6 @@
 {
   "name": "bs-bazaar",
-  "version": "1.0.0",
+  "version": "0.2.1",
   "description": "BS-Bazaar: A marketplace for Brighter Shores items",
   "private": true,
   "workspaces": [

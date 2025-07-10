@@ -155,4 +155,58 @@ for csv_file in csv_files_to_delete:
     except Exception as e:
         print(f"Error deleting {csv_file}: {e}")
 
+
+# Convert JSON to SQLite database
+import sqlite3
+
+print("Converting JSON to SQLite database...")
+try:
+    # Read the JSON file
+    with open(server_json_path, 'r', encoding='utf-8') as f:
+        items = json.load(f)
+
+    # Define SQLite DB path (in same /app/data/ folder)
+    sqlite_db_path = '/app/data/items.db'
+    conn = sqlite3.connect(sqlite_db_path)
+    c = conn.cursor()
+
+    # Drop table if exists and create new one
+    c.execute('DROP TABLE IF EXISTS items')
+    c.execute('''
+        CREATE TABLE items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Items TEXT,
+            Image TEXT,
+            Episode TEXT,
+            [Variant of] TEXT,
+            [Profession A] TEXT,
+            [Profession Level A] TEXT,
+            [Profession B] TEXT,
+            [Profession Level B] TEXT,
+            Tradeable TEXT
+        )
+    ''')
+
+    # Insert items
+    for item in items:
+        c.execute('''
+            INSERT INTO items (Items, Image, Episode, [Variant of], [Profession A], [Profession Level A], [Profession B], [Profession Level B], Tradeable)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            item.get('Items'),
+            item.get('Image'),
+            item.get('Episode'),
+            item.get('Variant of'),
+            item.get('Profession A'),
+            item.get('Profession Level A'),
+            item.get('Profession B'),
+            item.get('Profession Level B'),
+            item.get('Tradeable')
+        ))
+    conn.commit()
+    conn.close()
+    print(f"✅ SQLite database created at: {sqlite_db_path}")
+except Exception as e:
+    print(f"❌ Error creating SQLite database: {e}")
+
 print(f"[{pd.Timestamp.now()}] Automated scraping completed successfully!")

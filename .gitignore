@@ -5,6 +5,8 @@ bazaar-client/.env
 bazaar-client/.env.*
 bazaar-server/.env
 bazaar-server/.env.*
+!bazaar-client/.env.example
+!bazaar-server/.env.example
 
 # Environment switching script (contains sensitive config paths)
 switch-env.ps1

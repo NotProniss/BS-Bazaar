@@ -50,7 +50,18 @@ async function createMultipleListings() {
       type: "sell",
       seller: "WeaponSmith",
       contactInfo: "IGN: WeaponSmith",
-      priceMode: "Each"
+      priceMode: "Each",
+      combatCategory: "Sword",
+      combatLevel: "10",
+      combatStrength: "15",
+      combatDmgType: "Slash",
+      combatDmgPercent: "100",
+      combatImpact: "5",
+      combatCryonae: "0",
+      combatArborae: "0",
+      combatTempestae: "0",
+      combatInfernae: "0",
+      combatNecromae: "0"
     },
     {
       item: "Health Potion",
@@ -59,7 +70,18 @@ async function createMultipleListings() {
       type: "sell",
       seller: "AlchemistGuild",
       contactInfo: "Discord: AlchemistGuild#1234",
-      priceMode: "Each"
+      priceMode: "Each",
+      combatCategory: "Potion",
+      combatLevel: "1",
+      combatStrength: "0",
+      combatDmgType: "Heal",
+      combatDmgPercent: "0",
+      combatImpact: "0",
+      combatCryonae: "0",
+      combatArborae: "0",
+      combatTempestae: "0",
+      combatInfernae: "0",
+      combatNecromae: "0"
     },
     {
       item: "Rare Crystals",
@@ -68,7 +90,18 @@ async function createMultipleListings() {
       type: "buy",
       seller: "CrystalCollector",
       contactInfo: "IGN: CrystalCollector",
-      priceMode: "Total"
+      priceMode: "Total",
+      combatCategory: "Crystal",
+      combatLevel: "5",
+      combatStrength: "0",
+      combatDmgType: "Magic",
+      combatDmgPercent: "0",
+      combatImpact: "0",
+      combatCryonae: "10",
+      combatArborae: "5",
+      combatTempestae: "0",
+      combatInfernae: "0",
+      combatNecromae: "0"
     }
   ];
 
@@ -119,7 +152,19 @@ async function main() {
     quantity: 1,
     type: "sell",
     seller: "DefenseExpert",
-    contactInfo: "IGN: DefenseExpert"
+    contactInfo: "IGN: DefenseExpert",
+    priceMode: "Each",
+    combatCategory: "Shield",
+    combatLevel: "8",
+    combatStrength: "12",
+    combatDmgType: "Block",
+    combatDmgPercent: "0",
+    combatImpact: "2",
+    combatCryonae: "0",
+    combatArborae: "0",
+    combatTempestae: "0",
+    combatInfernae: "0",
+    combatNecromae: "0"
   };
   
   if (validateListing(singleListing)) {

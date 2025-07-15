@@ -8,7 +8,7 @@ ARG REACT_APP_BACKEND_URL=http://localhost:3001
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 COPY package*.json ./
-RUN npm install
+RUN npm install && npm install react-window
 COPY . .
 
 # build for production

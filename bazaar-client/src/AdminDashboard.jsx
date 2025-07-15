@@ -79,20 +79,27 @@ function AdminDashboard({ onRefreshListings }) {
   if (!isAdmin) return null;
 
   return (
-    <div style={{ borderTop: '2px solid #ccc', marginTop: '2rem', paddingTop: '1rem' }}>
-      <h2>Admin Dashboard</h2>
+    <div
+      style={{ borderTop: '2px solid #ccc', marginTop: '2rem', paddingTop: '1rem' }}
+      className="bg-transparent text-black dark:text-white"
+    >
+      <h2 className="dark:text-white">Admin Dashboard</h2>
 
-      {hasError && <p style={{ color: 'red' }}>Error loading admin data.</p>}
+      {hasError && <p className="dark:text-white" style={{ color: 'red' }}>Error loading admin data.</p>}
 
       <section>
-        <h3>Manage Admins</h3>
+        <h3 className="dark:text-white">Manage Admins</h3>
         <ul>
           {admins.map(admin => (
-            <li key={admin.id}>
-              {admin.id}
-              <button onClick={() => removeAdmin(admin.id)} style={{ marginLeft: '1rem' }}>
-                Remove
+            <li key={admin.id} className="dark:text-white flex flex-row items-center gap-2">
+              <button
+                onClick={() => removeAdmin(admin.id)}
+                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 transition-colors cursor-pointer border border-red-600 hover:border-red-800 dark:border-red-400 dark:hover:border-red-200 rounded w-8 h-8 flex items-center justify-center"
+                aria-label="Remove admin"
+              >
+                ✕
               </button>
+              <span>{admin.id}</span>
             </li>
           ))}
         </ul>
@@ -102,21 +109,26 @@ function AdminDashboard({ onRefreshListings }) {
           placeholder="New admin Discord ID"
           value={newAdminId}
           onChange={(e) => setNewAdminId(e.target.value)}
+          className="dark:text-white dark:bg-gray-800 border rounded px-2 py-1 mb-2"
         />
-        <button onClick={addAdmin}>Add Admin</button>
+        <button className="dark:text-white dark:bg-gray-700 border rounded px-3 py-1" onClick={addAdmin}>Add Admin</button>
       </section>
 
       <section style={{ marginTop: '2rem' }}>
-        <h3>All Listings</h3>
+        <h3 className="dark:text-white">All Listings</h3>
         <ul>
           {listings
             .sort((a, b) => a.item.localeCompare(b.item))
             .map(listing => (
-            <li key={listing.id}>
-              {listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by {listing.seller}
-              <button onClick={() => deleteListing(listing.id)} style={{ marginLeft: '1rem' }}>
-                Delete
+            <li key={listing.id} className="dark:text-white flex flex-row items-center gap-2">
+              <button
+                onClick={() => deleteListing(listing.id)}
+                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 transition-colors cursor-pointer border border-red-600 hover:border-red-800 dark:border-red-400 dark:hover:border-red-200 rounded w-8 h-8 flex items-center justify-center"
+                aria-label="Delete listing"
+              >
+                ✕
               </button>
+              <span>{listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by {listing.seller}</span>
             </li>
           ))}
         </ul>

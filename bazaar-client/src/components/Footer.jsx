@@ -3,15 +3,10 @@ import React from 'react';
 function Footer() {
   return (
     <footer 
-      className="w-full text-center bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-300 fixed bottom-0 left-0 z-50" 
-      style={{
-        position: 'fixed', 
-        left: 0, 
-        bottom: 0, 
-        width: '100%', 
-        borderTop: '1px solid #e5e7eb', 
-        padding: '0.25rem 0'
-      }}
+      className={
+        `w-full text-center fixed bottom-0 left-0 z-50 border-t p-1 ` +
+        (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'bg-gray-900 text-white border-gray-800' : 'bg-gray-200 text-gray-700 border-gray-300')
+      }
     >
       <div>&copy; Proniss 2025</div>
       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">

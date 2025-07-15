@@ -6,17 +6,19 @@ function CurrencyInput({
   gold, 
   silver, 
   copper, 
-  handleChange 
+  handleChange, 
+  priceDisplayMode, 
+  setPriceDisplayMode 
 }) {
   return (
-    <div className="grid grid-cols-4 gap-4 mb-4">
-      <div className="flex items-center">
+    <div className="flex flex-row gap-x-2 mb-4 items-center w-full justify-between">
+      <div className="flex items-center flex-grow min-w-0">
         <input
           type="number"
           value={platinum === "0" ? "" : platinum}
           onChange={handleChange}
           name="Platinum"
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white flex-grow min-w-0"
           placeholder="0"
           min="0"
           max="999"
@@ -29,13 +31,13 @@ function CurrencyInput({
         />
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center flex-grow min-w-0">
         <input
           type="number"
           value={gold === "0" ? "" : gold}
           onChange={handleChange}
           name="Gold"
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white flex-grow min-w-0"
           placeholder="0"
           min="0"
           max="999"
@@ -48,13 +50,13 @@ function CurrencyInput({
         />
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center flex-grow min-w-0">
         <input
           type="number"
           value={silver === "0" ? "" : silver}
           onChange={handleChange}
           name="Silver"
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white flex-grow min-w-0"
           placeholder="0"
           min="0"
           max="999"
@@ -67,13 +69,13 @@ function CurrencyInput({
         />
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center flex-grow min-w-0">
         <input
           type="number"
           value={copper === "0" ? "" : copper}
           onChange={handleChange}
           name="Copper"
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white flex-grow min-w-0"
           placeholder="0"
           min="0"
           max="999"
@@ -84,6 +86,14 @@ function CurrencyInput({
           title="Copper"
           className="h-7 w-7 ml-2 object-contain" 
         />
+        <select
+          value={priceDisplayMode}
+          onChange={e => setPriceDisplayMode(e.target.value)}
+          className="border rounded dark:bg-gray-800 text-black dark:text-white text-sm h-10 px-2 ml-2 min-w-[60px] w-auto"
+        >
+          <option value="Each">Each</option>
+          <option value="Total">Total</option>
+        </select>
       </div>
     </div>
   );

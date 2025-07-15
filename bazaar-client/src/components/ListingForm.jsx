@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import ItemDropdown from './ItemDropdown';
 import CurrencyInput from './CurrencyInput';
 import CombatFields from './CombatFields';
-import { itemData } from '../utils/constants';
+// ...existing code...
 import { calculateTotalCopper } from '../utils/helpers';
+import PreviewCard from './PreviewCard';
 
 function ListingForm({
   // Form state
@@ -14,8 +15,9 @@ function ListingForm({
   silver, setSilver,
   copper, setCopper,
   quantity, setQuantity,
-  contactInfo, setContactInfo,
+  IGN, setIGN, contactInfo, setContactInfo,
   priceDisplayMode, setPriceDisplayMode,
+  itemOptions = [],
   
   // Combat fields
   combatStrength, setCombatStrength,
@@ -37,8 +39,16 @@ function ListingForm({
   successMessage,
   onSubmit,
   onCancel,
-  loggedInUser
+  loggedInUser,
+  darkMode
 }) {
+  const [localIGN, setLocalIGN] = React.useState("");
+  // Ensure combatCategory is initialized to empty string if not already
+  React.useEffect(() => {
+    if (typeof setCombatCategory === 'function' && (combatCategory === null || combatCategory === undefined)) {
+      setCombatCategory("");
+    }
+  }, [combatCategory, setCombatCategory]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     // Only allow positive numbers and max 3 digits
@@ -72,11 +82,93 @@ function ListingForm({
   const totalCopper = calculateTotalCopper(platinum, gold, silver, copper);
 
   const handleSubmit = () => {
-    onSubmit(totalCopper);
+    // Build full listing object with all fields
+    const itemName = typeof item === "object" && item !== null ? item.Items : item;
+    const listing = {
+      item: itemName,
+      type,
+      platinum: Number(platinum) || 0,
+      gold: Number(gold) || 0,
+      silver: Number(silver) || 0,
+      copper: Number(copper) || 0,
+      price: totalCopper,
+      quantity: Number(quantity) || 1,
+      IGN: localIGN,
+      priceMode: priceDisplayMode,
+      combatCategory: combatCategory || "",
+      combatLevel: combatLevel || "",
+      combatStrength: combatStrength || "",
+      combatDmgType: combatDmgType || "",
+      combatDmgPercent: combatDmgPercent || "",
+      combatImpact: combatImpact || "",
+      combatCryonae: combatCryonae || "",
+      combatArborae: combatArborae || "",
+      combatTempestae: combatTempestae || "",
+      combatInfernae: combatInfernae || "",
+      combatNecromae: combatNecromae || "",
+      rarity: rarity || ""
+    };
+    // DEBUG: Log all combat field values before submitting
+    // eslint-disable-next-line no-console
+    console.log('[ListingForm DEBUG] Submitting listing:', {
+      combatCategory,
+      combatLevel,
+      combatStrength,
+      combatDmgType,
+      combatDmgPercent,
+      combatImpact,
+      combatCryonae,
+      combatArborae,
+      combatTempestae,
+      combatInfernae,
+      combatNecromae,
+      rarity
+    });
+    // DEBUG: Log the full listing object being sent to backend
+    // eslint-disable-next-line no-console
+    console.log('[ListingForm DEBUG] Full listing object:', listing);
+    onSubmit(listing);
   };
 
-  const selected = itemData.find(i => i.Items === item);
-  const isCombat = selected && (selected["Profession A"] === "Combat" || selected["Profession B"] === "Combat");
+  // Fetch item data from backend API
+  const [itemData, setItemData] = useState([]);
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+        const res = await fetch(`${BACKEND_URL}/api/items`);
+        if (!res.ok) throw new Error('Failed to fetch item data');
+        const data = await res.json();
+        setItemData(data);
+      } catch (err) {
+        console.error('Error fetching item data:', err);
+        setItemData([]);
+      }
+    }
+    fetchData();
+  }, []);
+  // Split items with multiple professions in Profession B into separate elements
+  // Normalize Profession B to always be an array
+  const normalizedItemData = itemData.map(i => {
+    let professionsB = [];
+    if (i["Profession B"]) {
+      // Replace ' and ' with ',' and split, then trim
+      professionsB = i["Profession B"]
+        .replace(/\s+and\s+/gi, ',')
+        .split(',')
+        .map(prof => prof.trim())
+        .filter(Boolean);
+    }
+    return {
+      ...i,
+      "Profession B": professionsB
+    };
+  });
+
+  // Defensive: if item is accidentally set as an object, extract the name
+  const itemName = typeof item === "object" && item !== null ? item.Items : item;
+  const selected = normalizedItemData.find(i => i.Items === itemName);
+  const isCombat = selected && (selected["Profession A"] === "Combat" || selected["Profession B"].includes("Combat"));
 
   // Clear rarity when combat category is not Weapon or Armor
   useEffect(() => {
@@ -93,50 +185,55 @@ function ListingForm({
   }, [isCombat, setRarity]);
 
   return (
-    <div className="mb-6 grid gap-3 max-w-4xl mx-auto">
+    <div className={`mb-6 grid gap-3 max-w-4xl mx-auto ${darkMode ? 'bg-gray-800 border border-gray-800' : ''}`}> 
       {/* Item selection and type */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Item</label>
-        <div className="flex gap-2">
+        <label className="block text-sm font-medium mb-1 dark:text-white">Item</label>
+        <div className="flex gap-2 items-center">
           <ItemDropdown 
             item={item}
             setItem={setItem}
             formError={formError}
+            itemOptions={itemOptions}
           />
-          <div className="relative flex-1 min-w-[120px] max-w-xs">
+          <div className="relative flex-1 min-w-[120px] max-w-xs flex gap-2 items-center">
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+              className="border rounded dark:bg-gray-800 text-black dark:text-white min-w-[70px] w-fit text-sm h-10 px-2"
+              style={{ width: '70px', minWidth: '70px', maxWidth: '90px' }}
             >
               <option value="buy">Buy</option>
               <option value="sell">Sell</option>
             </select>
+            <input
+              type="number"
+              value={quantity}
+              onChange={handleQuantityChange}
+              className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-20 ml-2"
+              placeholder="Qty"
+              min="1"
+              step="1"
+            />
           </div>
         </div>
       </div>
 
       {/* Price mode dropdown */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Price Mode</label>
-        <select
-          value={priceDisplayMode}
-          onChange={e => setPriceDisplayMode(e.target.value)}
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full max-w-xs"
-        >
-          <option value="Each">Each</option>
-          <option value="Total">Total</option>
-        </select>
-      </div>
+      {/* Price mode dropdown moved to CurrencyInput */}
 
       {/* Currency inputs */}
-      <CurrencyInput
-        platinum={platinum}
-        gold={gold}
-        silver={silver}
-        copper={copper}
-        handleChange={handleChange}
-      />
+      <div className="w-full flex">
+        <CurrencyInput
+          platinum={platinum}
+          gold={gold}
+          silver={silver}
+          copper={copper}
+          handleChange={handleChange}
+          priceDisplayMode={priceDisplayMode}
+          setPriceDisplayMode={setPriceDisplayMode}
+        />
+      </div>
 
       {/* Combat fields */}
       {isCombat && (
@@ -166,61 +263,70 @@ function ListingForm({
           rarity={rarity}
           setRarity={setRarity}
           formError={formError}
+          darkMode={darkMode}
         />
       )}
 
-      {/* Quantity and IGN */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Quantity</label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={handleQuantityChange}
-            className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
-            placeholder="1"
-            min="1"
-            step="1"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">IGN</label>
-          <input
-            type="text"
-            value={contactInfo}
-            onChange={(e) => setContactInfo(e.target.value)}
-            className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
-            placeholder="In Game Name"
-            maxLength="16"
-          />
-        </div>
+      {/* IGN only */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1 dark:text-white">IGN</label>
+        <input
+          type="text"
+          value={localIGN}
+          onChange={(e) => {
+            setLocalIGN(e.target.value);
+            if (typeof setIGN === 'function') setIGN(e.target.value);
+            if (typeof setContactInfo === 'function') setContactInfo(e.target.value);
+          }}
+          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
+          placeholder="In Game Name"
+          maxLength="16"
+        />
       </div>
 
-      {/* Error message */}
-      {formError && (
-        <div className="text-red-500 text-sm mb-4">
-          {formError}
+      {/* Preview card only shown if item is selected */}
+      {itemName && (
+        <div className={`mt-8 rounded-lg overflow-hidden`}>
+          <PreviewCard
+            item={itemName}
+            type={type}
+            platinum={platinum}
+            gold={gold}
+            silver={silver}
+            copper={copper}
+            quantity={quantity}
+            contactInfo={localIGN}
+            priceDisplayMode={priceDisplayMode}
+            combatCategory={combatCategory}
+            combatLevel={combatLevel}
+            combatStrength={combatStrength}
+            combatDmgType={combatDmgType}
+            combatDmgPercent={combatDmgPercent}
+            combatImpact={combatImpact}
+            combatCryonae={combatCryonae}
+            combatArborae={combatArborae}
+            combatTempestae={combatTempestae}
+            combatInfernae={combatInfernae}
+            combatNecromae={combatNecromae}
+            rarity={rarity}
+            loggedInUser={loggedInUser}
+            darkMode={darkMode}
+            isListing={false}
+            professionsB={selected ? selected["Profession B"] : []}
+          />
         </div>
       )}
-
-      {/* Success message */}
-      {successMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 animate-pulse">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Submit and Cancel buttons */}
-      <div className="flex gap-3">
+      {/* Submit and Cancel buttons below preview */}
+      <div className="flex gap-3 mt-6">
         <button
           onClick={handleSubmit}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white px-4 py-2 rounded"
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white dark:text-white px-4 py-2 rounded"
         >
           {editingId ? "Update Listing" : "Post Listing"}
         </button>
         <button
           onClick={onCancel}
-          className="flex-1 bg-red-500 hover:bg-red-600 transition text-white px-4 py-2 rounded"
+          className="flex-1 bg-red-500 hover:bg-red-600 transition text-white dark:text-white px-4 py-2 rounded"
         >
           Cancel
         </button>

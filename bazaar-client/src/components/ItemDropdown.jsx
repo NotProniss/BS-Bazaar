@@ -1,10 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { itemData } from '../utils/constants';
+import { FixedSizeList as List } from 'react-window';
+// import { itemData } from '../utils/constants';
 
-function ItemDropdown({ item, setItem, formError }) {
+function ItemDropdown({ item, setItem, formError, itemOptions = [] }) {
+  // State must be initialized before using in filteredOptions
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState("");
   const dropdownRef = useRef(null);
+
+  // Filtered options for search
+  const filteredOptions = itemOptions.filter(opt =>
+    (opt.Items || "").toLowerCase().includes(dropdownSearch.toLowerCase())
+  );
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -28,9 +35,9 @@ function ItemDropdown({ item, setItem, formError }) {
       >
         {item ? (
           <span className="flex items-center gap-2">
-            {itemData.find((i) => i.Items === item)?.Image && (
+            {itemOptions.find((i) => i.Items === item)?.Image && (
               <img 
-                src={itemData.find((i) => i.Items === item)?.Image} 
+                src={itemOptions.find((i) => i.Items === item)?.Image} 
                 alt={item} 
                 className="h-7 w-7 object-contain" 
               />
@@ -52,7 +59,7 @@ function ItemDropdown({ item, setItem, formError }) {
       </button>
       
       {dropdownOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border rounded shadow max-h-60 overflow-y-auto">
+        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border rounded shadow max-h-60 overflow-y-auto text-black dark:text-white">
           <div className="p-2">
             <input
               type="text"
@@ -63,32 +70,39 @@ function ItemDropdown({ item, setItem, formError }) {
               autoFocus
             />
           </div>
-          <ul>
-            {itemData.filter(opt =>
-              (opt.Items || "").toLowerCase().includes(dropdownSearch.toLowerCase())
-            ).map((itemOption) => (
-              <li
-                key={itemOption.Items}
-                className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  item === itemOption.Items ? 'bg-gray-200 dark:bg-gray-700' : ''
-                }`}
-                onClick={() => {
-                  setItem(itemOption.Items);
-                  setDropdownOpen(false);
-                  setDropdownSearch("");
-                }}
-              >
-                {itemOption.Image && (
-                  <img 
-                    src={itemOption.Image} 
-                    alt={itemOption.Items} 
-                    className="h-7 w-7 object-contain" 
-                  />
-                )}
-                <span>{itemOption.Items}</span>
-              </li>
-            ))}
-          </ul>
+          <List
+            height={240}
+            itemCount={filteredOptions.length}
+            itemSize={48}
+            width={"100%"}
+          >
+            {({ index, style }) => {
+              const itemOption = filteredOptions[index];
+              return (
+                <div
+                  key={itemOption.Items}
+                  style={style}
+                  className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    item === itemOption.Items ? 'bg-gray-200 dark:bg-gray-700' : ''
+                  }`}
+                  onClick={() => {
+                    setItem(itemOption.Items);
+                    setDropdownOpen(false);
+                    setDropdownSearch("");
+                  }}
+                >
+                  {itemOption.Image && (
+                    <img 
+                      src={itemOption.Image} 
+                      alt={itemOption.Items} 
+                      className="h-7 w-7 object-contain" 
+                    />
+                  )}
+                  <span>{itemOption.Items}</span>
+                </div>
+              );
+            }}
+          </List>
         </div>
       )}
     </div>

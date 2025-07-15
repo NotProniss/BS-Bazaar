@@ -1,53 +1,78 @@
-import React from 'react';
-import { itemData, professionImages, dmgTypeImages, currencyImages, episodeImages } from '../utils/constants';
+import React, { useEffect, useState } from 'react';
+import { professionImages, dmgTypeImages, currencyImages, episodeImages } from '../utils/constants';
 import { calculateTotalCopper, formatTimeAgo } from '../utils/helpers';
 
-function ItemCard({
-  // Form props (for preview mode)
-  item,
-  type,
-  platinum,
-  gold,
-  silver,
-  copper,
-  quantity,
-  contactInfo,
-  priceDisplayMode,
-  combatCategory,
-  combatLevel,
-  combatStrength,
-  combatDmgType,
-  combatDmgPercent,
-  combatImpact,
-  combatCryonae,
-  combatArborae,
-  combatTempestae,
-  combatInfernae,
-  combatNecromae,
-  rarity,
-  loggedInUser,
-  darkMode,
-  
-  // Listing mode props
-  listing,
-  onEdit,
-  onDelete,
-  isListing = false,
-  timestamp
-}) {
-  if (!item) return null;
+function ItemCard(props) {
+  const {
+    item,
+    type,
+    platinum,
+    gold,
+    silver,
+    copper,
+    quantity,
+    IGN,
+    priceDisplayMode,
+    combatCategory,
+    combatLevel,
+    combatStrength,
+    combatDmgType,
+    combatDmgPercent,
+    combatImpact,
+    combatCryonae,
+    combatArborae,
+    combatTempestae,
+    combatInfernae,
+    combatNecromae,
+    rarity,
+    loggedInUser,
+    darkMode,
+    listing,
+    onEdit,
+    onDelete,
+    isListing = false,
+    timestamp
+  } = props;
 
+  // Fetch item data from backend API
+  const [itemData, setItemData] = useState([]);
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+        const res = await fetch(`${BACKEND_URL}/api/items`);
+        if (!res.ok) throw new Error('Failed to fetch item data');
+        const data = await res.json();
+        setItemData(data);
+      } catch (err) {
+        console.error('Error fetching item data:', err);
+        setItemData([]);
+      }
+    }
+    fetchData();
+  }, []);
+  if (!item) return null;
   const itemInfo = itemData.find(i => i.Items === item);
-  const isCombat = itemInfo && (itemInfo["Profession A"] === "Combat" || itemInfo["Profession B"] === "Combat");
+  // Prefer combat/profession fields from listing if present, else fallback to itemInfo
+  const getField = (field) => (listing && listing[field] !== undefined ? listing[field] : itemInfo ? itemInfo[field] : undefined);
+  // Only declare these once!
+  const isCombat = getField("Profession A") === "Combat" || getField("Profession B") === "Combat";
+  // For professionsB array, prefer listing then itemInfo
+  let professionsB = [];
+  const profBString = getField("Profession B");
+  if (profBString && typeof profBString === "string") {
+    professionsB = profBString.split(/[,/]/).map(p => p.trim()).filter(p => p && p !== "Combat" && p !== "None" && p !== getField("Profession A"));
+    professionsB = [...new Set(professionsB)];
+  }
+  // Use getField inline for combat/profession fields below
   const totalCopper = calculateTotalCopper(platinum, gold, silver, copper);
 
-  // Medium price formatter for preview cards (slightly larger than listing cards but smaller than original)
+  // Price formatter
   const formatPriceMedium = (totalCopper) => {
     const platinum = Math.floor(totalCopper / 1000000000);
     const gold = Math.floor((totalCopper % 1000000000) / 1000000);
     const silver = Math.floor((totalCopper % 1000000) / 1000);
     const copper = totalCopper % 1000;
-
     const parts = [];
     if (platinum) parts.push(
       <span key="Platinum" style={{display: 'inline-flex', alignItems: 'center', fontSize: '1rem', fontWeight: 600, lineHeight: 1}}>
@@ -77,8 +102,15 @@ function ItemCard({
   };
 
   // Calculate prices
-  const eachPrice = totalCopper;
-  const totalPrice = eachPrice * Number(quantity || 1);
+  const qty = Number(quantity) || 1;
+  let eachPrice, totalPrice;
+  if (priceDisplayMode === "Total") {
+    totalPrice = totalCopper;
+    eachPrice = qty > 0 ? Math.floor(totalPrice / qty) : 0;
+  } else {
+    eachPrice = totalCopper;
+    totalPrice = eachPrice * qty;
+  }
 
   // Get item data for image
   const currentItemData = itemData.find(i => i.Items === item);
@@ -99,7 +131,7 @@ function ItemCard({
   const QuantityTypeUser = () => (
     <div className="text-center">
       <div className="text-lg font-semibold mb-1">{quantity}x</div>
-      <div className={`px-2 py-1 rounded text-xs font-medium ${
+      <div className={`px-2 py-1 rounded text-xs font-bold ${
         type === "buy" 
           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
           : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
@@ -108,14 +140,14 @@ function ItemCard({
       </div>
       
       {/* Discord username - always show */}
-      <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap" title={isListing ? (listing?.seller || loggedInUser || "Anonymous") : (loggedInUser || "Anonymous")}>
+      {/* <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap" title={isListing ? (listing?.seller || loggedInUser || "Anonymous") : (loggedInUser || "Anonymous")}>
         {isListing ? (listing?.seller || loggedInUser || "Anonymous") : (loggedInUser || "Anonymous")}
-      </div>
+      </div> */}
       
-      {/* IGN - show if contactInfo exists, regardless of listing/preview mode */}
-      {contactInfo && (
+      {/* IGN - show if IGN exists, regardless of listing/preview mode */}
+      {IGN && (
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-all max-w-[80px]">
-          IGN: {contactInfo}
+          IGN: {IGN}
         </div>
       )}
     </div>
@@ -123,7 +155,10 @@ function ItemCard({
 
   const ItemTitle = () => (
     <div className="mb-2">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white break-words">
+      <h3 className={
+        `text-xl font-bold break-words ` +
+        (darkMode ? 'text-white' : 'text-gray-900')
+      }>
         {item}
       </h3>
     </div>
@@ -133,56 +168,67 @@ function ItemCard({
     <div className="mb-6">
       {isListing ? (
         /* Listing Mode */
-        <li className="bg-gray-50 border rounded-xl p-4 shadow-sm flex flex-row justify-between items-stretch dark:bg-gray-800 text-black dark:text-white relative gap-4" style={{ minHeight: '200px' }}>
+        <li
+          className={
+            `border rounded-xl p-4 shadow-sm flex flex-row justify-between items-stretch relative gap-4 ` +
+            (darkMode ? 'text-white bg-[#1f2937]' : 'text-black bg-[#f9fafb]')
+          }
+          style={{ minHeight: '200px' }}
+        >
           <div className="flex flex-row gap-4 flex-1 min-w-0 items-stretch">
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
-              <ItemImage />
+              <div className="relative">
+                <img
+                  src={itemImageUrl}
+                  alt={item}
+                  title={item}
+                  className={"w-16 h-16 rounded border object-contain " + (darkMode ? "bg-gray-900" : "bg-white")}
+                />
+              </div>
               <QuantityTypeUser />
             </div>
             <div className="flex flex-col min-w-0 flex-1 h-full">
               {/* Top content area that can expand */}
               <div className="flex-1 min-h-0">
                 <ItemTitle />
-                
-                {/* Episode and profession information for non-combat items */}
                 {!isCombat && (
                   <div className="mt-2 text-sm">
                     <div className="flex flex-wrap gap-2 items-center">
-                      {itemInfo?.Episode && itemInfo.Episode !== "None" && (
-                        <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 ${
-                          itemInfo.Episode === 'Hopeforest' ? 'border-green-500' :
-                          itemInfo.Episode === 'Hopeport' ? 'border-yellow-500' :
-                          itemInfo.Episode === 'Mine of Mantuban' ? 'border-blue-500' :
-                          itemInfo.Episode === 'Crenopolis' ? 'border-gray-500' :
-                          itemInfo.Episode === 'Stonemaw Hill' ? 'border-orange-500' :
+                      {getField("Episode") && getField("Episode") !== "None" && (
+                        <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${
+                          getField("Episode") === 'Hopeforest' ? 'border-green-500' :
+                          getField("Episode") === 'Hopeport' ? 'border-yellow-500' :
+                          getField("Episode") === 'Mine of Mantuban' ? 'border-blue-500' :
+                          getField("Episode") === 'Crenopolis' ? 'border-gray-500' :
+                          getField("Episode") === 'Stonemaw Hill' ? 'border-orange-500' :
                           'border-gray-300'
                         }`}>
-                          {episodeImages[itemInfo.Episode] && (
-                            <img src={episodeImages[itemInfo.Episode]} alt={itemInfo.Episode} title={itemInfo.Episode} className="h-3 w-3 object-contain flex-shrink-0" />
+                          {episodeImages[getField("Episode")] && (
+                            <img src={episodeImages[getField("Episode")]} alt={getField("Episode")} title={getField("Episode")} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
-                          <span className="font-semibold text-xs">{itemInfo.Episode}</span>
+                          <span className="font-semibold text-xs">{getField("Episode")}</span>
                         </div>
                       )}
-                      {itemInfo?.["Profession A"] && itemInfo["Profession A"] !== "Combat" && itemInfo["Profession A"] !== "None" && (
-                        <div className="inline-flex items-center gap-1 border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700">
-                          {professionImages[itemInfo["Profession A"]] && (
-                            <img src={professionImages[itemInfo["Profession A"]]} alt={itemInfo["Profession A"]} title={itemInfo["Profession A"]} className="h-3 w-3 object-contain flex-shrink-0" />
+                      {getField("Profession A") && getField("Profession A") !== "Combat" && getField("Profession A") !== "None" && (
+                        <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          {professionImages[getField("Profession A")] && (
+                            <img src={professionImages[getField("Profession A")]} alt={getField("Profession A")} title={getField("Profession A")} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
                           <span className="font-semibold text-xs">
-                            {itemInfo["Profession A"]}: {itemInfo["Profession Level A"] || "0"}
+                            {getField("Profession A")}: {getField("Profession Level A") || "0"}
                           </span>
                         </div>
                       )}
-                      {itemInfo?.["Profession B"] && itemInfo["Profession B"] !== "Combat" && itemInfo["Profession B"] !== "None" && itemInfo["Profession B"] !== itemInfo["Profession A"] && (
-                        <div className="inline-flex items-center gap-1 border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700">
-                          {professionImages[itemInfo["Profession B"]] && (
-                            <img src={professionImages[itemInfo["Profession B"]]} alt={itemInfo["Profession B"]} title={itemInfo["Profession B"]} className="h-3 w-3 object-contain flex-shrink-0" />
+                      {Array.isArray(professionsB) && professionsB.map((prof, idx) => (
+                        <div key={prof + idx} className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          {professionImages[prof] && (
+                            <img src={professionImages[prof]} alt={prof} title={prof} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
                           <span className="font-semibold text-xs">
-                            {itemInfo["Profession B"]}: {itemInfo["Profession Level B"] || "0"}
+                            {prof}: {getField("Profession Level B") || "0"}
                           </span>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 )}
@@ -199,7 +245,6 @@ function ItemCard({
                         <span className="font-semibold text-sm">{combatLevel || "-"}</span>
                       </div>
                     </div>
-                    
                     {/* Rarity display for weapons and armor */}
                     {rarity && (combatCategory === "Weapon" || combatCategory === "Armor") && (
                       <div className="mb-2">
@@ -273,7 +318,8 @@ function ItemCard({
             {/* Top section: edit/delete buttons and timestamp */}
             <div className="flex flex-col items-end">
               {/* Edit/Delete buttons for user's listings */}
-              {isListing && loggedInUser && (listing?.seller === loggedInUser) && (
+              {isListing && loggedInUser && listing?.seller &&
+                listing.seller.trim().toLowerCase() === loggedInUser.trim().toLowerCase() && (
                 <div className="flex gap-2 mb-2">
                   <div className="relative group">
                     <button
@@ -360,7 +406,7 @@ function ItemCard({
                     <div className="mt-2 text-sm">
                       <div className="flex flex-wrap gap-2 items-center">
                         {itemInfo?.Episode && itemInfo.Episode !== "None" && (
-                          <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 bg-gray-100 dark:bg-gray-700 ${
+                          <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${
                             itemInfo.Episode === 'Hopeforest' ? 'border-green-500' :
                             itemInfo.Episode === 'Hopeport' ? 'border-yellow-500' :
                             itemInfo.Episode === 'Mine of Mantuban' ? 'border-blue-500' :
@@ -375,7 +421,7 @@ function ItemCard({
                           </div>
                         )}
                         {itemInfo?.["Profession A"] && itemInfo["Profession A"] !== "Combat" && itemInfo["Profession A"] !== "None" && (
-                          <div className="inline-flex items-center gap-1 border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700">
+                          <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                             {professionImages[itemInfo["Profession A"]] && (
                               <img src={professionImages[itemInfo["Profession A"]]} alt={itemInfo["Profession A"]} title={itemInfo["Profession A"]} className="h-3 w-3 object-contain flex-shrink-0" />
                             )}
@@ -385,7 +431,7 @@ function ItemCard({
                           </div>
                         )}
                         {itemInfo?.["Profession B"] && itemInfo["Profession B"] !== "Combat" && itemInfo["Profession B"] !== "None" && itemInfo["Profession B"] !== itemInfo["Profession A"] && (
-                          <div className="inline-flex items-center gap-1 border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700">
+                          <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                             {professionImages[itemInfo["Profession B"]] && (
                               <img src={professionImages[itemInfo["Profession B"]]} alt={itemInfo["Profession B"]} title={itemInfo["Profession B"]} className="h-3 w-3 object-contain flex-shrink-0" />
                             )}

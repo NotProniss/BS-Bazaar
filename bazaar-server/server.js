@@ -126,13 +126,9 @@ passport.use(new DiscordStrategy({
 }));
 
 // Health Check and Info Routes
+// Health check endpoint for Docker
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    version: require('./package.json').version
-  });
+  res.status(200).send('OK');
 });
 
 app.get('/api/info', (req, res) => {
@@ -190,32 +186,37 @@ app.get('/is-admin', authenticateJWT, async (req, res) => {
 app.get('/listings', async (req, res) => {
   try {
     const listings = await db.all('SELECT * FROM listings ORDER BY timestamp DESC');
+    // DEBUG: Log all listings before sending to frontend
+    console.log('[API DEBUG] Listings returned:', listings);
     res.json(listings);
   } catch (err) {
     console.error('Error reading listings from DB:', err);
     res.status(500).json({ error: 'Failed to read listings from database' });
   }
 });
-
 app.post('/listings', authenticateJWT, async (req, res) => {
-  const { item, price, quantity, type, category, contactInfo, priceMode,
+  const { item, price, quantity, type, category, IGN, priceMode,
     combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent,
-    combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae } = req.body;
+    combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae,
+    rarity // <-- added
+  } = req.body;
+  const totalPrice = price * quantity;
   try {
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, type, category, seller, sellerId, sellerAvatar, timestamp, contactInfo, priceMode,
-        combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, sellerId, sellerAvatar, timestamp, IGN, priceMode,
+        combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
       price,
       quantity,
+      totalPrice,
       type,
       category,
       req.user.username,
       req.user.id,
       req.user.avatar,
       Date.now(),
-      contactInfo || '',
+      IGN || '',
       priceMode || 'Each',
       combatCategory || '',
       combatLevel || '',
@@ -227,9 +228,11 @@ app.post('/listings', authenticateJWT, async (req, res) => {
       combatArborae || '',
       combatTempestae || '',
       combatInfernae || '',
-      combatNecromae || ''
+      combatNecromae || '',
+      rarity || '' // <-- added
     );
-    const listing = await db.get('SELECT * FROM listings WHERE id = ?', stmt.lastID);
+    let listing = await db.get('SELECT * FROM listings WHERE id = ?', stmt.lastID);
+    listing.totalPrice = totalPrice;
     io.emit('listingCreated', listing); // Emit event
     res.json({ success: true, listing });
   } catch (err) {
@@ -239,24 +242,27 @@ app.post('/listings', authenticateJWT, async (req, res) => {
 });
 
 app.put('/listings/:id', authenticateJWT, async (req, res) => {
-  const { item, price, quantity, type, category, contactInfo, priceMode,
+  const { item, price, quantity, type, category, IGN, priceMode,
     combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent,
-    combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae } = req.body;
+    combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae,
+    rarity // <-- added
+  } = req.body;
   try {
     const listing = await db.get('SELECT * FROM listings WHERE id = ?', req.params.id);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
     if (listing.sellerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
+    const totalPrice = price * quantity;
     await db.run(`
       UPDATE listings
-      SET item = ?, price = ?, quantity = ?, type = ?, category = ?, contactInfo = ?, priceMode = ?,
+      SET item = ?, price = ?, quantity = ?, totalPrice = ?, type = ?, category = ?, IGN = ?, priceMode = ?,
         combatCategory = ?, combatLevel = ?, combatStrength = ?, combatDmgType = ?, combatDmgPercent = ?,
-        combatImpact = ?, combatCryonae = ?, combatArborae = ?, combatTempestae = ?, combatInfernae = ?, combatNecromae = ?,
+        combatImpact = ?, combatCryonae = ?, combatArborae = ?, combatTempestae = ?, combatInfernae = ?, combatNecromae = ?, rarity = ?,
         timestamp = ?
       WHERE id = ?`,
-      item, price, quantity, type, category, contactInfo || '', priceMode || 'Each',
+      item, price, quantity, totalPrice, type, category, IGN || '', priceMode || 'Each',
       combatCategory || '', combatLevel || '', combatStrength || '', combatDmgType || '', combatDmgPercent || '',
-      combatImpact || '', combatCryonae || '', combatArborae || '', combatTempestae || '', combatInfernae || '', combatNecromae || '',
+      combatImpact || '', combatCryonae || '', combatArborae || '', combatTempestae || '', combatInfernae || '', combatNecromae || '', rarity || '',
       Date.now(),
       req.params.id
     );
@@ -264,7 +270,7 @@ app.put('/listings/:id', authenticateJWT, async (req, res) => {
     io.emit('listingUpdated', updated); // Emit event
     res.json({ success: true, listing: updated });
   } catch (err) {
-    console.error('Error updating listing in DB:', err);
+    console.error('Error updating listing:', err);
     res.status(500).json({ error: 'Failed to update listing' });
   }
 });
@@ -314,23 +320,51 @@ app.post('/admin/users/remove', authenticateJWT, ensureAdmin, async (req, res) =
 });
 
 // ==== ITEMS API ENDPOINTS ====
+// Get only item names and images for dropdown
+app.get('/api/items/meta/names', async (req, res) => {
+  try {
+    const db = await open({
+      filename: path.join(__dirname, 'data', 'items.db'),
+      driver: sqlite3.Database
+    });
+    const rows = await db.all('SELECT Items, Image FROM items');
+    await db.close();
+    res.json(rows);
+  } catch (err) {
+    console.error('Error reading item names/images from db:', err);
+    res.status(500).json({ error: 'Failed to read item names/images from db' });
+  }
+});
+// Get all item names from items.db
+app.get('/api/items/names', async (req, res) => {
+  try {
+    const db = await open({
+      filename: path.join(__dirname, 'data', 'items.db'),
+      driver: sqlite3.Database
+    });
+    const rows = await db.all('SELECT Items FROM items');
+    await db.close();
+    const names = rows.map(row => row.Items).filter(Boolean);
+    res.json(names);
+  } catch (err) {
+    console.error('Error reading item names from db:', err);
+    res.status(500).json({ error: 'Failed to read item names from db' });
+  }
+});
 
 // Get all items from items.json
 app.get('/api/items', async (req, res) => {
   try {
-    const itemsPath = path.join(__dirname, 'data', 'items.json');
-    
-    if (!fs.existsSync(itemsPath)) {
-      return res.status(404).json({ error: 'Items data not found' });
-    }
-    
-    const itemsData = fs.readFileSync(itemsPath, 'utf8');
-    const items = JSON.parse(itemsData);
-    
+    const db = await open({
+      filename: path.join(__dirname, 'data', 'items.db'),
+      driver: sqlite3.Database
+    });
+    const items = await db.all('SELECT * FROM items');
+    await db.close();
     res.json(items);
   } catch (err) {
-    console.error('Error reading items data:', err);
-    res.status(500).json({ error: 'Failed to read items data' });
+    console.error('Error reading items from db:', err);
+    res.status(500).json({ error: 'Failed to read items from db' });
   }
 });
 
@@ -345,53 +379,42 @@ app.get('/api/items/search', async (req, res) => {
       limit = 50,
       offset = 0 
     } = req.query;
-    
-    const itemsPath = path.join(__dirname, 'data', 'items.json');
-    
-    if (!fs.existsSync(itemsPath)) {
-      return res.status(404).json({ error: 'Items data not found' });
-    }
-    
-    const itemsData = fs.readFileSync(itemsPath, 'utf8');
-    let items = JSON.parse(itemsData);
-    
-    // Apply filters
+    const db = await open({
+      filename: path.join(__dirname, 'data', 'items.db'),
+      driver: sqlite3.Database
+    });
+    let query = 'SELECT * FROM items WHERE 1=1';
+    let params = [];
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter(item => 
-        item.Items && item.Items.toLowerCase().includes(query)
-      );
+      query += ' AND Items LIKE ?';
+      params.push(`%${searchQuery}%`);
     }
-    
     if (profession) {
-      items = items.filter(item => 
-        item['Profession A'] === profession || item['Profession B'] === profession
-      );
+      query += ' AND ([Profession A] = ? OR [Profession B] = ?)';
+      params.push(profession, profession);
     }
-    
     if (episode) {
-      items = items.filter(item => item.Episode === episode);
+      query += ' AND Episode = ?';
+      params.push(episode);
     }
-    
     if (tradeable !== undefined) {
-      const isTradeableFilter = tradeable === 'true';
-      items = items.filter(item => item.Tradeable === isTradeableFilter);
+      query += ' AND Tradeable = ?';
+      params.push(tradeable);
     }
-    
-    // Apply pagination
-    const startIndex = parseInt(offset);
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedItems = items.slice(startIndex, endIndex);
-    
+    query += ' LIMIT ? OFFSET ?';
+    params.push(parseInt(limit), parseInt(offset));
+    const items = await db.all(query, params);
+    const total = await db.get('SELECT COUNT(*) as count FROM items');
+    await db.close();
     res.json({
-      items: paginatedItems,
-      total: items.length,
-      offset: startIndex,
+      items,
+      total: total.count,
+      offset: parseInt(offset),
       limit: parseInt(limit)
     });
   } catch (err) {
-    console.error('Error searching items:', err);
-    res.status(500).json({ error: 'Failed to search items' });
+    console.error('Error searching items in db:', err);
+    res.status(500).json({ error: 'Failed to search items in db' });
   }
 });
 
@@ -634,15 +657,18 @@ app.get('/api/market-stats/:itemName', async (req, res) => {
 
 // Create a new listing (API endpoint with validation)
 app.post('/api/listings', async (req, res) => {
+  // DEBUG: Log incoming POST data for troubleshooting
+  console.log('DEBUG /api/listings POST body:', req.body);
   const { 
     item, 
     price, 
     quantity, 
     type, 
     category, 
-    contactInfo, 
+    IGN, 
     priceMode,
     seller,
+    contactInfo, // <-- added
     combatCategory, 
     combatLevel, 
     combatStrength, 
@@ -653,7 +679,8 @@ app.post('/api/listings', async (req, res) => {
     combatArborae, 
     combatTempestae, 
     combatInfernae, 
-    combatNecromae 
+    combatNecromae,
+    rarity // <-- ensure rarity is included
   } = req.body;
 
   // Validation
@@ -676,13 +703,15 @@ app.post('/api/listings', async (req, res) => {
   }
 
   try {
+    const totalPrice = price * quantity;
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, type, category, seller, sellerId, sellerAvatar, timestamp, contactInfo, priceMode,
-        combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, sellerId, sellerAvatar, timestamp, contactInfo, priceMode,
+        combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
       price,
       quantity,
+      totalPrice,
       type.toLowerCase(),
       category || '',
       seller,
@@ -701,14 +730,11 @@ app.post('/api/listings', async (req, res) => {
       combatArborae || '',
       combatTempestae || '',
       combatInfernae || '',
-      combatNecromae || ''
+      combatNecromae || '',
+      rarity || ''
     );
-    
     const listing = await db.get('SELECT * FROM listings WHERE id = ?', stmt.lastID);
-    
-    // Emit socket event for real-time updates
     io.emit('listingCreated', listing);
-    
     res.status(201).json({ 
       success: true, 
       message: 'Listing created successfully',
@@ -755,7 +781,7 @@ io.on('connection', (socket) => {
     
     // Open database connection
     db = await open({
-      filename: 'marketplace.db',
+      filename: path.join(__dirname, 'marketplace.db'),
       driver: sqlite3.Database,
     });
     
@@ -774,7 +800,7 @@ io.on('connection', (socket) => {
         sellerId TEXT,
         sellerAvatar TEXT,
         timestamp INTEGER NOT NULL,
-        contactInfo TEXT,
+        IGN TEXT,
         priceMode TEXT DEFAULT 'Each',
         combatCategory TEXT,
         combatLevel TEXT,
@@ -795,9 +821,22 @@ io.on('connection', (socket) => {
         id TEXT PRIMARY KEY
       );
     `);
+    try {
+      await db.exec('ALTER TABLE listings ADD COLUMN rarity TEXT');
+      console.log('Added column: rarity TEXT');
+    } catch (e) {
+      // Column already exists, ignore error
+    }
+    try {
+      await db.exec('ALTER TABLE listings ADD COLUMN IGN TEXT');
+      console.log('Added column: IGN TEXT');
+    } catch (e) {
+      // Column already exists, ignore error
+    }
 
     // Add new columns for combat fields if they do not exist
     const columns = [
+      'totalPrice INTEGER',
       'combatCategory TEXT',
       'combatLevel TEXT',
       'combatStrength TEXT',
@@ -809,6 +848,7 @@ io.on('connection', (socket) => {
       'combatTempestae TEXT',
       'combatInfernae TEXT',
       'combatNecromae TEXT',
+      'contactInfo TEXT',
     ];
     
     for (const col of columns) {

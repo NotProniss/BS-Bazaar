@@ -1,5 +1,5 @@
 import React from 'react';
-import { itemData, professionImages, dmgTypeImages, currencyImages, episodeImages } from '../utils/constants';
+import { professionImages, dmgTypeImages, currencyImages, episodeImages } from '../utils/constants';
 import { calculateTotalCopper, formatTimeAgo } from '../utils/helpers';
 
 function PreviewCard({
@@ -36,6 +36,23 @@ function PreviewCard({
 }) {
   if (!item) return null;
 
+  // Fetch item data from backend API
+  const [itemData, setItemData] = React.useState([]);
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+        const res = await fetch(`${BACKEND_URL}/api/items`);
+        if (!res.ok) throw new Error('Failed to fetch item data');
+        const data = await res.json();
+        setItemData(data);
+      } catch (err) {
+        console.error('Error fetching item data:', err);
+        setItemData([]);
+      }
+    }
+    fetchData();
+  }, []);
   const itemInfo = itemData.find(i => i.Items === item);
   const isCombat = itemInfo && (itemInfo["Profession A"] === "Combat" || itemInfo["Profession B"] === "Combat");
   const totalCopper = calculateTotalCopper(platinum, gold, silver, copper);

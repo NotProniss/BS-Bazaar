@@ -43,7 +43,19 @@ import infernaeImg from '../assets/Infernae.png';
 import necromaeImg from '../assets/Necromae.png';
 
 // Items data
-import itemData from '../data/items.json';
+
+// Dynamic item data fetcher
+export async function fetchItemData() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/items`);
+    if (!res.ok) throw new Error('Failed to fetch item data');
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching item data:', err);
+    return [];
+  }
+}
 
 export const currencyImages = {
   platinum: platinumImg,
@@ -93,7 +105,7 @@ export const dmgTypeImages = {
   Necromae: necromaeImg
 };
 
-export { itemData };
+// Removed export { itemData } since itemData is no longer defined
 
 export const CURRENCY_MULTIPLIERS = {
   platinum: 1000000000,

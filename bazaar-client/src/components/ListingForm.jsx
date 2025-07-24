@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import config from '../config';
 import ItemDropdown from './ItemDropdown';
 import CurrencyInput from './CurrencyInput';
 import CombatFields from './CombatFields';
@@ -42,7 +43,6 @@ function ListingForm({
   loggedInUser,
   darkMode
 }) {
-  const [localIGN, setLocalIGN] = React.useState("");
   // Ensure combatCategory is initialized to empty string if not already
   React.useEffect(() => {
     if (typeof setCombatCategory === 'function' && (combatCategory === null || combatCategory === undefined)) {
@@ -93,7 +93,7 @@ function ListingForm({
       copper: Number(copper) || 0,
       price: totalCopper,
       quantity: Number(quantity) || 1,
-      IGN: localIGN,
+      IGN: IGN,
       priceMode: priceDisplayMode,
       combatCategory: combatCategory || "",
       combatLevel: combatLevel || "",
@@ -135,8 +135,7 @@ function ListingForm({
   useEffect(() => {
     async function fetchData() {
       try {
-        const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
-        const res = await fetch(`${BACKEND_URL}/api/items`);
+        const res = await fetch(`${config.API_URL}/items`);
         if (!res.ok) throw new Error('Failed to fetch item data');
         const data = await res.json();
         setItemData(data);
@@ -272,9 +271,8 @@ function ListingForm({
         <label className="block text-sm font-medium mb-1 dark:text-white">IGN</label>
         <input
           type="text"
-          value={localIGN}
+          value={IGN}
           onChange={(e) => {
-            setLocalIGN(e.target.value);
             if (typeof setIGN === 'function') setIGN(e.target.value);
             if (typeof setContactInfo === 'function') setContactInfo(e.target.value);
           }}
@@ -295,7 +293,7 @@ function ListingForm({
             silver={silver}
             copper={copper}
             quantity={quantity}
-            contactInfo={localIGN}
+            contactInfo={IGN}
             priceDisplayMode={priceDisplayMode}
             combatCategory={combatCategory}
             combatLevel={combatLevel}

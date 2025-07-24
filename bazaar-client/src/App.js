@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import AdminDashboard from './AdminDashboard';
@@ -10,7 +10,12 @@ import MyListings from './pages/mylistings';
 import TestPage from './pages/test';
 import AuthSuccess from './AuthSuccess';
 import { jwtDecode } from 'jwt-decode';
-function App() {
+import GettingStarted from './pages/gettingstarted';
+
+
+function AppContent() {
+  const navigate = useNavigate();
+  // ...existing code...
   const [listings, setListings] = useState([]);
   const [type, setType] = useState('buy');
   const [item, setItem] = useState('');
@@ -164,6 +169,7 @@ function App() {
   };
 
   const startEditing = (listing) => {
+    console.log('Editing listing:', listing);
     setItem(listing.item);
     const price = listing.price;
     setPlatinum(Math.floor(price / 1000));
@@ -173,7 +179,9 @@ function App() {
     setQuantity(listing.quantity);
     setType(listing.type);
     setCategory(listing.category);
+    setIGN(listing.IGN || '');
     setEditingId(listing.id);
+    navigate('/post');
   };
 
   const filteredListings = listings
@@ -198,7 +206,6 @@ function App() {
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   return (
-    <BrowserRouter>
       <div className={`min-h-screen flex flex-row ${darkMode ? 'dark bg-gray-900' : 'bg-gray-100'}`}> 
         <div className="w-72 flex-shrink-0">
           <Sidebar
@@ -209,7 +216,7 @@ function App() {
             isAdmin={isAdmin}
           />
         </div>
-        <main className="flex-1 flex flex-col">
+        <main className={`flex-1 flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}> 
           <div className="flex-1 py-10 px-4">
             <div className={darkMode ? "max-w-3xl mx-auto bg-gray-800 p-6 rounded-2xl shadow-lg" : "max-w-3xl mx-auto bg-gray-50 p-6 rounded-2xl shadow-lg"}>
               {/* Header removed from main area. Now only in sidebar. */}
@@ -218,6 +225,7 @@ function App() {
                 <Route path="/auth-success" element={<AuthSuccess />} />
                 <Route path="/test" element={<TestPage />} />
                 <Route path="/" element={<Navigate to="/alllistings" replace />} />
+                <Route path="/gettingstarted" element={<GettingStarted darkMode={darkMode} />} />
                 <Route path="/alllistings" element={
                   <ListingsPage
                     listings={listings}
@@ -241,6 +249,7 @@ function App() {
                 <Route path="/post" element={
                   loggedInUser ? (
                     <PostPage
+                      key={editingId || 'new'}
                       item={item}
                       setItem={setItem}
                       platinum={platinum}
@@ -318,6 +327,13 @@ function App() {
           <Footer />
         </main>
       </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

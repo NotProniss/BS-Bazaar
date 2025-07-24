@@ -51,9 +51,9 @@ function Sidebar({
       
       {/* Navigation tabs - match live site order and style */}
       <Link
-        to="/alllistings"
+        to="/gettingstarted"
         className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-          isActive("/alllistings")
+          isActive("/gettingstarted")
             ? "bg-indigo-600 text-white"
             : darkMode
               ? "bg-gray-700 text-white"
@@ -61,9 +61,8 @@ function Sidebar({
         }`}
         style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
       >
-        All Listings
+        Getting Started
       </Link>
-
       {loggedInUser && (
         <>
           <Link
@@ -79,6 +78,23 @@ function Sidebar({
           >
             Post Listing
           </Link>
+        </>
+      )}
+      <Link
+        to="/alllistings"
+        className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
+          isActive("/alllistings")
+            ? "bg-indigo-600 text-white"
+            : darkMode
+              ? "bg-gray-700 text-white"
+              : "bg-gray-200 text-black"
+        }`}
+        style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+      >
+        All Listings
+      </Link>
+      {loggedInUser && (
+        <>
           <Link
             to="/mylistings"
             className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
@@ -112,7 +128,8 @@ function Sidebar({
         </Link>
       )}
       
-      <div className="mt-auto w-full flex flex-col gap-3 mb-16">
+         <div className="flex flex-col h-full w-full pb-8">
+           <div className="flex-grow"></div>
         {/* Login/Logout button */}
         {loggedInUser ? (
           <button 
@@ -134,16 +151,15 @@ function Sidebar({
         <h3 className={`text-sm font-semibold text-center mb-1 ${darkMode ? 'text-white' : 'text-gray-700'}`}>
           External Resources
         </h3>
-        
-        {/* External links in 1x4 grid */}
-        <div className="grid grid-cols-4 gap-0.5 mb-2">
+        {/* External links in 2x4 grid, no overlap */}
+        <div className="grid grid-cols-3 grid-rows-2 gap-2 mb-2">
           {/* Wrevo button */}
-          <div className="relative group">
+          <div className="relative group flex items-center justify-center">
             <a
               href="https://wrevo.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-0.5 rounded font-medium text-xs text-center transition flex items-center justify-center w-8 h-8"
+              className="rounded font-medium text-xs text-center transition flex items-center justify-center w-10 h-10"
               style={{ 
                 backgroundColor: '#009688',
                 color: 'white'
@@ -155,22 +171,55 @@ function Sidebar({
                 e.target.style.backgroundColor = '#009688';
               }}
             >
-              <img src={require("../assets/wrevo.png")} alt="Wrevo" title="Wrevo" className="h-3 w-auto object-contain" />
+              <img src={require("../assets/wrevo.png")} alt="Wrevo" title="Wrevo" className="h-4 w-4 object-contain" />
             </a>
             <div className="absolute bottom-full left-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
               Wrevo
             </div>
           </div>
-          
+          {/* Official Brighter Shores button */}
+          <div className="relative group flex items-center justify-center">
+            <a
+              href="https://www.brightershores.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 font-medium text-xs text-center hover:bg-indigo-200 dark:hover:bg-indigo-800 transition flex items-center justify-center w-10 h-10"
+            >
+              <span className="text-xl" role="img" aria-label="Globe">🌐</span>
+            </a>
+            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div className="text-center">
+                <div>Official Brighter</div>
+                <div>Shores Site</div>
+              </div>
+            </div>
+          </div>
+          {/* Bazaar Sync Discord bot */}
+          <div className="relative group flex items-center justify-center">
+            <a
+              href="https://discord.com/oauth2/authorize?client_id=1388662907163774996&permissions=339008&integration_type=0&scope=bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 font-medium text-xs text-center hover:bg-indigo-200 dark:hover:bg-indigo-800 transition flex items-center justify-center w-10 h-10"
+            >
+              <span className="text-xl" role="img" aria-label="Robot">🤖</span>
+            </a>
+            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div className="text-center">
+                <div>Bazaar Sync</div>
+                <div>Discord Bot</div>
+              </div>
+            </div>
+          </div>
           {/* Trading Discord button */}
-          <div className="relative group">
+          <div className="relative group flex items-center justify-center">
             <a
               href="https://discord.gg/KMSFvwFPY2"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-0.5 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 font-medium text-xs text-center hover:bg-indigo-200 dark:hover:bg-indigo-800 transition flex items-center justify-center w-8 h-8"
+              className="rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 font-medium text-xs text-center hover:bg-indigo-200 dark:hover:bg-indigo-800 transition flex items-center justify-center w-10 h-10"
             >
-              <span className="text-sm">⇄</span>
+              <span className="text-base">⇄</span>
             </a>
             <div className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
               <div className="text-center">
@@ -179,16 +228,15 @@ function Sidebar({
               </div>
             </div>
           </div>
-          
           {/* Bugs/Feedback button */}
-          <div className="relative group">
+          <div className="relative group flex items-center justify-center">
             <a
               href="https://discord.gg/twZYqBSG5x"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-0.5 rounded bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-medium text-xs text-center hover:bg-green-200 dark:hover:bg-green-800 transition flex items-center justify-center w-8 h-8"
+              className="rounded bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-medium text-xs text-center hover:bg-green-200 dark:hover:bg-green-800 transition flex items-center justify-center w-10 h-10"
             >
-              <span className="text-sm">🐛</span>
+              <span className="text-base">🐛</span>
             </a>
             <div className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
               <div className="text-center">
@@ -197,14 +245,13 @@ function Sidebar({
               </div>
             </div>
           </div>
-          
           {/* Wiki button */}
-          <div className="relative group">
+          <div className="relative group flex items-center justify-center">
             <a
               href="https://brightershoreswiki.org/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-0.5 rounded font-medium text-xs text-center transition flex items-center justify-center w-8 h-8"
+              className="rounded font-medium text-xs text-center transition flex items-center justify-center w-10 h-10"
               style={{ 
                 backgroundColor: '#6b7280',
                 color: 'white'
@@ -216,7 +263,7 @@ function Sidebar({
                 e.target.style.backgroundColor = '#6b7280';
               }}
             >
-              <img src={require("../assets/wiki.png")} alt="Wiki" title="Wiki" className="h-3 w-auto object-contain" />
+              <img src={require("../assets/wiki.png")} alt="Wiki" title="Wiki" className="h-4 w-4 object-contain" />
             </a>
             <div className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10" style={{ whiteSpace: 'nowrap' }}>
               <div className="text-center">
@@ -225,6 +272,11 @@ function Sidebar({
               </div>
             </div>
           </div>
+          {/* Empty cells for 2x4 grid symmetry */}
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
         </div>
       </div>
     </aside>

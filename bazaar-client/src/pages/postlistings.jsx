@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ListingForm from '../components/ListingForm';
 // ...existing code...
 
@@ -20,6 +21,8 @@ const PostPage = ({
   setCategory,
   type,
   setType,
+  IGN,
+  setIGN,
   addOrEditListing,
   editingId,
   resetForm,
@@ -27,12 +30,20 @@ const PostPage = ({
 }) => {
   // Fetch item data from backend
   const [itemOptions, setItemOptions] = useState([]);
+  const navigate = useNavigate();
   useEffect(() => {
-    fetch('http://localhost:3001/api/items/meta/names')
+    const { BACKEND_URL } = require('../utils/api');
+    fetch(`${BACKEND_URL}/api/items/meta/names`)
       .then(res => res.json())
       .then(data => setItemOptions(data))
       .catch(() => setItemOptions([]));
   }, []);
+
+  // Wrap addOrEditListing to redirect after successful post
+  const handleSubmit = async (listing) => {
+    await addOrEditListing(listing);
+    navigate('/alllistings');
+  };
 
   const [priceDisplayMode, setPriceDisplayMode] = useState("Each");
 
@@ -67,6 +78,8 @@ const PostPage = ({
         setCopper={setCopper}
         quantity={quantity}
         setQuantity={setQuantity}
+        IGN={IGN}
+        setIGN={setIGN}
         contactInfo={null}
         setContactInfo={() => {}}
         priceDisplayMode={priceDisplayMode}
@@ -99,7 +112,7 @@ const PostPage = ({
         formError={!item}
         successMessage={null}
         itemOptions={itemOptions}
-        onSubmit={addOrEditListing}
+        onSubmit={handleSubmit}
         onCancel={resetForm}
         loggedInUser={null}
         darkMode={darkMode}

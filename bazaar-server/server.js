@@ -1,5 +1,10 @@
 require('dotenv').config();
 const express = require('express');
+const app = express();
+// Health check endpoint for Nginx and debugging
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const passport = require('passport');
@@ -14,8 +19,13 @@ const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 
-const app = express();
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
+
+// Debug: Log client IP and X-Forwarded-For for every request
+app.use((req, res, next) => {
+  console.log('Client IP:', req.ip, 'X-Forwarded-For:', req.headers['x-forwarded-for']);
+  next();
+});
 const PORT = process.env.PORT || 3001;
 
 let db;
@@ -65,15 +75,39 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: { error: 'Too many requests from this IP, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
+// Debug: Log client IP for every request
+app.use((req, res, next) => {
+  console.log('Client IP:', req.ip, 'X-Forwarded-For:', req.headers['x-forwarded-for']);
+  next();
 });
-app.use(limiter);
+
+// Rate Limiting
+const localIPs = ['127.0.0.1', '::1', '10.0.0.134'];
+const allowedIpSuffixes = ['127.0.0.1', '::1', '10.0.0.134'];
+const rateLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // limit each IP to 30 requests per windowMs
+    skip: (req, res) => {
+        const ip = req.ip || req.connection.remoteAddress;
+        const xff = req.headers['x-forwarded-for'];
+        // Allow if IP ends with any allowed suffix (handles IPv6-mapped IPv4)
+        const allowed = allowedIpSuffixes.some(suffix => ip.endsWith(suffix));
+        if (allowed) {
+            console.log(`[RateLimit] SKIP: Matched allowed IP: ${ip} (XFF: ${xff})`);
+            return true;
+        }
+        // Extra: log all requests for debugging
+        console.log(`[RateLimit] CHECK: IP: ${ip} (XFF: ${xff}) - Not allowed, will be rate limited if over limit.`);
+        return false;
+    },
+    handler: (req, res) => {
+        const ip = req.ip || req.connection.remoteAddress;
+        const xff = req.headers['x-forwarded-for'];
+        console.warn(`[RateLimit] BLOCKED: IP: ${ip} (XFF: ${xff})`);
+        res.status(429).json({ error: 'Too many requests, please try again later.' });
+    }
+});
+app.use(rateLimiter);
 
 // Utility Functions
 function authenticateJWT(req, res, next) {
@@ -878,11 +912,11 @@ io.on('connection', (socket) => {
     console.log('Database initialization completed');
 
     // Start server
-    server.listen(PORT, () => {
-      console.log(`🚀 BS-Bazaar Server running on http://localhost:${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 BS-Bazaar Server running on http://0.0.0.0:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost'}`);
-      console.log(`📋 Health check: http://localhost:${PORT}/health`);
+      console.log(`📋 Health check: http://0.0.0.0:${PORT}/health`);
     });
 
   } catch (error) {

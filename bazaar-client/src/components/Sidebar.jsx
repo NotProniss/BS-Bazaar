@@ -112,7 +112,7 @@ function Sidebar({
       )}
       {/* Only one dark mode toggle button at the top. Remove duplicate. */}
 
-      {isAdmin && (
+      {loggedInUser && isAdmin && (
         <Link
           to="/adminpanel"
           className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${

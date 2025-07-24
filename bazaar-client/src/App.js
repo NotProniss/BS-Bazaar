@@ -1,6 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import posthog from 'posthog-js';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import AdminDashboard from './AdminDashboard';
@@ -11,6 +13,15 @@ import TestPage from './pages/test';
 import AuthSuccess from './AuthSuccess';
 import { jwtDecode } from 'jwt-decode';
 import GettingStarted from './pages/gettingstarted';
+
+// PostHog pageview tracking component
+function PostHogPageView() {
+  const location = useLocation();
+  useEffect(() => {
+    posthog.capture('$pageview');
+  }, [location]);
+  return null;
+}
 
 
 function AppContent() {
@@ -207,6 +218,7 @@ function AppContent() {
 
   return (
       <div className={`min-h-screen flex flex-row ${darkMode ? 'dark bg-gray-900' : 'bg-gray-100'}`}> 
+        <PostHogPageView />
         <div className="w-72 flex-shrink-0">
           <Sidebar
             darkMode={darkMode}

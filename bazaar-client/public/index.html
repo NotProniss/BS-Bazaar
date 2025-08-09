@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- Aggressive cache busting -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <title>BS Bazaar</title>
+    <meta name="description" content="BS Bazaar is a player-driven marketplace for Brighter Shores. Buy, sell, and discover in-game items, resources, and more!" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bs-bazaar.com/" />
+    <meta property="og:title" content="BS Bazaar - Brighter Shores Marketplace" />
+    <meta property="og:description" content="BS Bazaar is a player-driven marketplace for Brighter Shores. Buy, sell, and discover in-game items, resources, and more!" />
+    <meta property="og:image" content="https://bs-bazaar.com/logo512.png" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://bs-bazaar.com/" />
+    <meta name="twitter:title" content="BS Bazaar - Brighter Shores Marketplace" />
+    <meta name="twitter:description" content="BS Bazaar is a player-driven marketplace for Brighter Shores. Buy, sell, and discover in-game items, resources, and more!" />
+    <meta name="twitter:image" content="https://bs-bazaar.com/logo512.png" />
+    <script>
+      // Suppress script loading errors for external resources in development
+      window.addEventListener('error', function(e) {
+        if (e.target.tagName === 'SCRIPT' && e.target.src.includes('/ingest/')) {
+          console.warn('PostHog script loading error suppressed (expected in dev):', e);
+          e.preventDefault();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

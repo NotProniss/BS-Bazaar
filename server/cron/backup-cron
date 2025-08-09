@@ -1,0 +1,2 @@
+# Run backup of marketplace.db every hour
+0 * * * * root /app/scripts/backup_marketplace_db.sh

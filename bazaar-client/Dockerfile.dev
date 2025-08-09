@@ -1,0 +1,14 @@
+# Development Dockerfile for client with hot reloading
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install && npm install react-window
+
+# Expose port for development server
+EXPOSE 3000
+
+# Start the development server with hot reloading
+CMD ["npm", "start"]

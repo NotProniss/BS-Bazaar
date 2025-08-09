@@ -1,0 +1,86 @@
+[
+    {
+        "Id": "sha256:49c6372937336b4684c88b862602e2d7b7bfdfade0ee666ce92f104785b217cc",
+        "RepoTags": [
+            "bs-bazaar-client:latest"
+        ],
+        "RepoDigests": [],
+        "Parent": "",
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2025-08-01T03:46:02.015592563Z",
+        "DockerVersion": "",
+        "Author": "",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.29.0",
+                "PKG_RELEASE=1",
+                "DYNPKG_RELEASE=1",
+                "NJS_VERSION=0.9.0",
+                "NJS_RELEASE=1"
+            ],
+            "Cmd": [
+                "nginx",
+                "-g",
+                "daemon off;"
+            ],
+            "ArgsEscaped": true,
+            "Image": "",
+            "Volumes": null,
+            "WorkingDir": "/",
+            "Entrypoint": [
+                "/docker-entrypoint.sh"
+            ],
+            "OnBuild": null,
+            "Labels": {
+                "com.docker.compose.project": "bs-bazaar",
+                "com.docker.compose.service": "client",
+                "com.docker.compose.version": "2.33.1",
+                "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>"
+            },
+            "StopSignal": "SIGQUIT"
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 149034229,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/snap/docker/common/var-lib-docker/overlay2/wcr6zjt0ifskiuhs4tymlvjo7/diff:/var/snap/docker/common/var-lib-docker/overlay2/25ca9ef7f75a05c3c2ada66755d1ae40bd399cb8eeaa5084ee5bdf0f91c50786/diff:/var/snap/docker/common/var-lib-docker/overlay2/644e37358728d018d9fa530b2fb34e444756275b2c02d83b503f100704ddd90c/diff:/var/snap/docker/common/var-lib-docker/overlay2/04d23dde704428f067e780edb1c6d0eb39b513a8b129a27153a3ae1a18da8887/diff:/var/snap/docker/common/var-lib-docker/overlay2/8f63f8b3974735b550a58a9e89380f1d9e36e9e0520830598de2f50bb6ba65e7/diff:/var/snap/docker/common/var-lib-docker/overlay2/ba8df56fd3106ee2c2aca36ca31ef80e7f141ff239095b4dac5379bef295e3f5/diff:/var/snap/docker/common/var-lib-docker/overlay2/66896c62f7067f9f3efd2d7a61f358a2dc47518ca28ad30b12c32c376c451e49/diff:/var/snap/docker/common/var-lib-docker/overlay2/b23282acc9a62739b583f750fb503d5f25f472ac249e273b4b2f991b94ead835/diff:/var/snap/docker/common/var-lib-docker/overlay2/b118b785beffde37c7fd87c6f65df5f451f716f2a83a4bf293ac2572aca65790/diff",
+                "MergedDir": "/var/snap/docker/common/var-lib-docker/overlay2/5wqs1yp934w93rzy8804437et/merged",
+                "UpperDir": "/var/snap/docker/common/var-lib-docker/overlay2/5wqs1yp934w93rzy8804437et/diff",
+                "WorkDir": "/var/snap/docker/common/var-lib-docker/overlay2/5wqs1yp934w93rzy8804437et/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:418dccb7d85a63a6aa574439840f7a6fa6fd2321b3e2394568a317735e867d35",
+                "sha256:77a17eed5d29463213a63982741960f73ade62996f3698bab41c93ccf3e83e5f",
+                "sha256:430a7aa99a19d9993d7147098f48e6f3f31bf8c24d7f78327e79245583eae8f6",
+                "sha256:95a6190cfaec8aa82732270f3414a69f1bdb86e72c148955cff2be340c857164",
+                "sha256:daa8ffa7606a8b98117b003ab8ea55fbf3b2f0f194bc8bbfcddf25f0693d829e",
+                "sha256:26081059fc81095e0105c664ad6da55596ab0f6e92966f518c5b23016c6d59a3",
+                "sha256:c38bee0b0d2864c1661486dcbdfe08e5980cfa8b61c11682bd0cd95c3ba589f8",
+                "sha256:57fb2e22a07aa9afdaac0a491c3b5a0948a4ea577aeaa99b5d1fa0cc9ece277b",
+                "sha256:5174fd146bd57fc79a137de9dd558d3a0804fb75cc4c9ef6182907e242d3bc25",
+                "sha256:f695d0e073e7866099b150a97afe9a13316754a826ba3cfcff397fee3a0e67d6"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2025-08-01T03:46:02.762812572Z"
+        }
+    }
+]

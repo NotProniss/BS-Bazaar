@@ -95,6 +95,13 @@ data/sessions.db
 data/marketplace.db*
 data/last_scrape_time
 
+# SSL certificates and private keys
+ssl/
+*.pem
+*.key
+*.crt
+*.csr
+
 # Backup files - but allow items.json.bak as fallback
 *.backup
 marketplace.db.backup-*

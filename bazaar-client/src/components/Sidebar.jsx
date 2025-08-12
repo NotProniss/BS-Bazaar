@@ -51,7 +51,7 @@ function Sidebar({
         className="text-xs text-indigo-400 dark:text-indigo-300 font-semibold text-center w-full" 
         style={{letterSpacing: '0.05em'}}
       >
-        Beta 0.2.2
+        Beta 0.2.3
       </p>
       
       {/* Light/Dark mode toggle */}

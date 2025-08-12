@@ -62,7 +62,7 @@ const PostPage = ({
   const navigate = useNavigate();
   useEffect(() => {
     const { BACKEND_URL, joinApiUrl } = require('../utils/api');
-    const url = joinApiUrl(BACKEND_URL, 'items/meta/names');
+    const url = joinApiUrl(BACKEND_URL, '/items/meta/names');
     fetch(url)
       .then(res => res.json())
       .then(data => setItemOptions(data))

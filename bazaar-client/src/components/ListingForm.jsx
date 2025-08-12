@@ -72,6 +72,7 @@ function ListingForm({
   const sanitizeInput = (input) => {
     if (!input) return '';
     // Remove potential SQL injection characters and other dangerous characters
+    // BUT KEEP SPACES for normal text input
     return input
       .replace(/['"`;\\]/g, '') // Remove quotes, semicolons, backslashes
       .replace(/--/g, '') // Remove SQL comment syntax
@@ -81,8 +82,7 @@ function ListingForm({
       .replace(/<\/script>/gi, '') // Remove closing script tags
       .replace(/javascript:/gi, '') // Remove javascript: protocol
       .replace(/on\w+=/gi, '') // Remove event handlers like onclick=
-      .trim()
-      .substring(0, 300); // Ensure max length
+      .substring(0, 300); // Ensure max length (removed .trim() to keep spaces)
   };
 
   const handleQuantityChange = (e) => {

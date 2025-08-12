@@ -292,10 +292,10 @@ function AppContent() {
       (listing) =>
         listing.item.toLowerCase().includes(search.toLowerCase()) &&
         (filterType === 'all' || listing.type === filterType) &&
-        (filterCategory === 'all' || listing.category.toLowerCase() === filterCategory.toLowerCase())
+        (filterCategory === 'all' || (listing.category && listing.category.toLowerCase() === filterCategory.toLowerCase()))
     )
     .sort((a, b) => (sortOrder === 'asc' ? a.price - b.price : b.price - a.price));
-  console.log('Filtered listings:', filteredListings);
+  console.log('Filtered listings:', filteredListings.length, 'of', listings.length);
 
   const uniqueCategories = ['all', ...new Set(listings.map((l) => l.category))];
 

@@ -29,16 +29,26 @@ const ListingsPage = ({
   // Reset visible listings when filters change
   React.useEffect(() => {
     setVisibleListings(10);
-  }, [search, filterType, episodeFilter, professionFilter, sortOrder]);
+  }, [search, filterType, filterCategory, episodeFilter, professionFilter, sortOrder]);
+  
+  // Reset episode and profession filters when search or main filters change
+  React.useEffect(() => {
+    if (search || filterType !== 'all' || filterCategory !== 'all') {
+      setEpisodeFilter('all');
+      setProfessionFilter('all');
+    }
+  }, [search, filterType, filterCategory]);
   // Fetch item data from backend API
   const [itemData, setItemData] = React.useState([]);
   React.useEffect(() => {
     async function fetchData() {
       try {
         const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
-        const res = await fetch(`${BACKEND_URL}/api/items`);
+        const res = await fetch(`${BACKEND_URL}/items`);
         if (!res.ok) throw new Error('Failed to fetch item data');
         const data = await res.json();
+        console.log('DEBUG - Item data loaded:', data.length, 'items');
+        console.log('DEBUG - Sample item:', data[0]);
         setItemData(data);
       } catch (err) {
         console.error('Error fetching item data:', err);
@@ -47,38 +57,52 @@ const ListingsPage = ({
     }
     fetchData();
   }, []);
-  // Ordered episode list
-  const episodeOrder = [
-    'Hopeport',
-    'Hopeforest',
-    'Mine of Mantuban',
-    'Crenopolis',
-    'Stonemaw Hill'
-  ];
-  const hasGlobal = itemData.some(i => i.Episode === 'Global');
-  const uniqueEpisodes = ['all', ...episodeOrder.filter(ep => itemData.some(i => i.Episode === ep)), ...(hasGlobal ? ['Global'] : [])];
-  // Ordered profession list
-  const professionOrder = [
-    'Combat',
-    'Forager',
-    'Fisher',
-    'Chef',
-    'Alchemist',
-    'Gatherer',
-    'Woodcutter',
-    'Carpenter',
-    'Miner',
-    'Bonewright',
-    'Blacksmith',
-    'Stonemason',
-    'Detective',
-    'Leatherworker',
-    'Merchant'
-  ];
-  const uniqueProfessions = ['all', ...professionOrder.filter(prof => [
-    ...itemData.map(i => i['Profession A']),
-    ...itemData.map(i => i['Profession B'])
-  ].includes(prof))];
+  // Calculate unique episodes and professions after item data loads
+  const getUniqueEpisodes = () => {
+    if (itemData.length === 0) return ['all']; // Return at least 'all' option while loading
+    
+    const episodeOrder = [
+      'Hopeport',
+      'Hopeforest',
+      'Mine of Mantuban',
+      'Crenopolis',
+      'Stonemaw Hill'
+    ];
+    const hasGlobal = itemData.some(i => i.Episode === 'Global');
+    return ['all', ...episodeOrder.filter(ep => itemData.some(i => i.Episode === ep)), ...(hasGlobal ? ['Global'] : [])];
+  };
+
+  const getUniqueProfessions = () => {
+    if (itemData.length === 0) return ['all']; // Return at least 'all' option while loading
+    
+    const professionOrder = [
+      'Combat',
+      'Forager',
+      'Fisher',
+      'Chef',
+      'Alchemist',
+      'Gatherer',
+      'Woodcutter',
+      'Carpenter',
+      'Miner',
+      'Bonewright',
+      'Blacksmith',
+      'Stonemason',
+      'Detective',
+      'Leatherworker',
+      'Merchant'
+    ];
+    return ['all', ...professionOrder.filter(prof => [
+      ...itemData.map(i => i['Profession A']),
+      ...itemData.map(i => i['Profession B'])
+    ].includes(prof))];
+  };
+
+  const uniqueEpisodes = getUniqueEpisodes();
+  const uniqueProfessions = getUniqueProfessions();
+
+  console.log('DEBUG - Unique episodes:', uniqueEpisodes);
+  console.log('DEBUG - Unique professions:', uniqueProfessions);
 
   // Helper to get image src for episode/profession
   const getEpisodeImage = (ep) => {
@@ -232,33 +256,52 @@ const ListingsPage = ({
       {/* Active Listings summary */}
       <div className={darkMode ? "text-xs font-medium text-white text-right mb-2 pr-2" : "text-xs font-medium text-gray-700 text-right mb-2 pr-2"}>
         {(() => {
+          console.log('DEBUG - filteredListings length:', filteredListings.length);
+          console.log('DEBUG - itemData length:', itemData.length);
+          console.log('DEBUG - episodeFilter:', episodeFilter, 'professionFilter:', professionFilter);
+          
           const activeCount = filteredListings.filter(listing => {
             const itemInfo = itemData.find(i => i.Items === listing.item);
             const matchesEpisode = episodeFilter === 'all' || (itemInfo && itemInfo.Episode === episodeFilter);
             const matchesProfession = professionFilter === 'all' || (itemInfo && [itemInfo['Profession A'], itemInfo['Profession B']].includes(professionFilter));
+            
+            if (!itemInfo) {
+              console.log('DEBUG - No item info found for:', listing.item);
+            }
+            
             return matchesEpisode && matchesProfession;
           }).length;
+          
+          console.log('DEBUG - activeCount after filtering:', activeCount);
           return `${activeCount} Active Listings`;
         })()}
       </div>
       <div>
-        {/* Filter listings by episode and profession */}
-        {filteredListings.filter(listing => {
-          const itemInfo = itemData.find(i => i.Items === listing.item);
-          const matchesEpisode = episodeFilter === 'all' || (itemInfo && itemInfo.Episode === episodeFilter);
-          const matchesProfession = professionFilter === 'all' || (itemInfo && [itemInfo['Profession A'], itemInfo['Profession B']].includes(professionFilter));
-          return matchesEpisode && matchesProfession;
-        }).length === 0 ? (
-          <div className="text-center text-gray-500">No listings found.</div>
-        ) : (
-          (() => {
-            const filteredAndSortedListings = filteredListings
-              .filter(listing => {
-                const itemInfo = itemData.find(i => i.Items === listing.item);
-                const matchesEpisode = episodeFilter === 'all' || (itemInfo && itemInfo.Episode === episodeFilter);
-                const matchesProfession = professionFilter === 'all' || (itemInfo && [itemInfo['Profession A'], itemInfo['Profession B']].includes(professionFilter));
-                return matchesEpisode && matchesProfession;
-              })
+        {/* Apply all filters to the base listings data, not the pre-filtered data */}
+        {(() => {
+          // Apply all filters to the base listings
+          const allFilteredListings = listings.filter(listing => {
+            // Basic filters from App.js
+            const matchesSearch = listing.item.toLowerCase().includes(search.toLowerCase());
+            const matchesType = filterType === 'all' || listing.type === filterType;
+            const matchesCategory = filterCategory === 'all' || (listing.category && listing.category.toLowerCase() === filterCategory.toLowerCase());
+            
+            // Episode and profession filters
+            const itemInfo = itemData.find(i => i.Items === listing.item);
+            const matchesEpisode = episodeFilter === 'all' || (itemInfo && itemInfo.Episode === episodeFilter);
+            const matchesProfession = professionFilter === 'all' || (itemInfo && [itemInfo['Profession A'], itemInfo['Profession B']].includes(professionFilter));
+            
+            return matchesSearch && matchesType && matchesCategory && matchesEpisode && matchesProfession;
+          });
+
+          console.log('DEBUG - Raw listings:', listings.length);
+          console.log('DEBUG - All filtered listings:', allFilteredListings.length);
+
+          if (allFilteredListings.length === 0) {
+            return <div className="text-center text-gray-500">No listings found.</div>;
+          }
+
+          const filteredAndSortedListings = allFilteredListings
               .sort((a, b) => {
                 if (sortOrder === 'asc') {
                   return a.price - b.price;
@@ -363,8 +406,7 @@ const ListingsPage = ({
                 )}
               </>
             );
-          })()
-        )}
+        })()}
       </div>
       {console.log('DEBUG: First listing in filteredListings:', filteredListings[0])}
     </div>

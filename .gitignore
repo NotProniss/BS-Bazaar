@@ -87,9 +87,14 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 
-# Docker volumes
-data/
+# Docker volumes - but allow specific data files
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/sessions.db
+data/marketplace.db*
+data/last_scrape_time
 
-# Backup files
-*.bak
+# Backup files - but allow items.json.bak as fallback
 *.backup
+marketplace.db.backup-*

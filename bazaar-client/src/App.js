@@ -124,17 +124,14 @@ function AppContent() {
         const payload = jwtDecode(token);
         setLoggedInUser(payload.username);
         // Check admin status
-        axios.get(`${BACKEND_URL}/admin/users`, {
+        axios.get(`${BACKEND_URL}/is-admin`, {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(res => {
-            if (res.data.admins && res.data.admins.some(a => a.id === payload.id || a.id === payload.username)) {
-              setIsAdmin(true);
-            } else {
-              setIsAdmin(false);
-            }
+            setIsAdmin(res.data.isAdmin || false);
           })
           .catch(err => {
+            console.error('Failed to check admin status:', err);
             setIsAdmin(false);
           });
       } catch (err) {
@@ -311,8 +308,14 @@ function AppContent() {
 
   // Sidebar collapse state for mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-  const closeSidebar = () => setSidebarOpen(false);
+  const toggleSidebar = () => {
+    console.log('toggleSidebar called, current state:', sidebarOpen);
+    setSidebarOpen((prev) => !prev);
+  };
+  const closeSidebar = () => {
+    console.log('closeSidebar called');
+    setSidebarOpen(false);
+  };
 
   return (
     <>
@@ -343,10 +346,10 @@ function AppContent() {
           />
         )}
         
-        {/* Sidebar - hidden on mobile unless open, always visible on desktop */}
+        {/* Sidebar - hideable on all screen sizes */}
         <div className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static top-0 left-0 z-50 lg:z-auto transition-transform duration-300 ease-in-out w-72 flex-shrink-0`}>
+        } fixed top-0 left-0 z-50 transition-transform duration-300 ease-in-out w-72 flex-shrink-0`}>
           <Sidebar
             darkMode={darkMode}
             toggleDarkMode={toggleDarkMode}

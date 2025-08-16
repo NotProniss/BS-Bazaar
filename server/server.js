@@ -200,7 +200,7 @@ app.post('/logout', (req, res) => {
 });
 
 // Check if user is admin
-app.get('/is-admin', authenticateJWT, async (req, res) => {
+app.get('/api/is-admin', authenticateJWT, async (req, res) => {
   try {
     const row = await db.get('SELECT 1 FROM admins WHERE id = ?', req.user?.id);
     res.json({ isAdmin: !!row });

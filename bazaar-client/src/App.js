@@ -124,10 +124,13 @@ function AppContent() {
         const payload = jwtDecode(token);
         setLoggedInUser(payload.username);
         // Check admin status
+        console.log('[DEBUG] Checking admin status for user:', payload.username);
+        console.log('[DEBUG] Making request to:', `${BACKEND_URL}/is-admin`);
         axios.get(`${BACKEND_URL}/is-admin`, {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(res => {
+            console.log('[DEBUG] Admin check response:', res.data);
             setIsAdmin(res.data.isAdmin || false);
           })
           .catch(err => {

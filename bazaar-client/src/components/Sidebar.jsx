@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BACKEND_URL } from '../utils/api';
 // import posthog from 'posthog-js';
 
 function Sidebar({ 
@@ -19,15 +18,53 @@ function Sidebar({
     closeSidebar();
   };
 
+  // Helper function for navigation link styling
+  const getNavLinkStyles = (path) => {
+    const isActiveLink = isActive(path);
+    
+    if (isActiveLink) {
+      return {
+        background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+        color: '#1a1a2e',
+        boxShadow: '0 4px 8px rgba(212, 175, 55, 0.4)',
+        transform: 'translateX(2px)'
+      };
+    }
+    
+    return {
+      background: darkMode 
+        ? 'linear-gradient(135deg, rgba(42, 42, 62, 0.6) 0%, rgba(26, 26, 46, 0.6) 100%)'
+        : 'linear-gradient(135deg, rgba(245, 230, 163, 0.3) 0%, rgba(248, 249, 250, 0.8) 100%)',
+      color: darkMode ? '#F5E6A3' : '#6B4E3D',
+      border: `1px solid ${darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'}`,
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+    };
+  };
+
   return (
-    <aside 
-      className={`h-screen flex flex-col items-start gap-2 p-6 shadow-lg min-w-[220px] overflow-hidden ${darkMode ? "bg-gray-800" : "bg-white"}`} 
-      style={{ borderTopRightRadius: '2rem', borderBottomRightRadius: '2rem', width: '220px', background: darkMode ? '#1f2937' : undefined }}
+      <aside 
+        className={`h-screen flex flex-col items-start gap-2 p-6 shadow-lg min-w-[220px] overflow-hidden`} 
+        style={{ 
+          borderTopRightRadius: '2rem', 
+          borderBottomRightRadius: '2rem', 
+          width: '220px', 
+          boxShadow: '0 0 8px 2px #FFD700', // glowing gold shadow
+          border: '2px solid #FFD700', // thin gold border
+          background: darkMode
+            ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+            : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+        }}
     >
       {/* Close button - now visible on all screen sizes */}
       <button
         onClick={handleNavClick}
-        className="self-end mb-2 p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="self-end mb-2 p-1 rounded-md hover:bg-opacity-20 transition-colors"
+        style={{ 
+          color: darkMode ? '#D4AF37' : '#B8860B',
+          backgroundColor: 'transparent'
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = darkMode ? 'rgba(212, 175, 55, 0.1)' : 'rgba(184, 134, 11, 0.1)'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
         aria-label="Close sidebar"
       >
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,49 +72,101 @@ function Sidebar({
         </svg>
       </button>
       
-      <h1 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-indigo-700"} style={{ fontSize: '2.2rem' }}>
-        BS Bazaar
-      </h1>
+      {/* Logo and Title */}
+      <div className="flex flex-col items-center w-full mb-4">
+        <img 
+          src="/logo192.png" 
+          alt="BS Bazaar Logo" 
+          className="w-16 h-16 mb-2"
+          style={{ filter: darkMode ? 'none' : 'brightness(0.9)' }}
+        />
+        <h1 
+          className="text-xl font-bold text-center"
+          style={{ 
+            fontSize: '1.8rem',
+            color: darkMode ? '#D4AF37' : '#B8860B',
+            textShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.5)' : '0 1px 2px rgba(0,0,0,0.1)',
+            fontFamily: 'serif'
+          }}
+        >
+          BS Bazaar
+        </h1>
+      </div>
       
       {/* Welcome message at the top */}
       {loggedInUser && (
-        <p className={`text-sm text-center w-full ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          Welcome, <strong>{loggedInUser}</strong>
+        <p 
+          className="text-sm text-center w-full mb-2"
+          style={{ color: darkMode ? '#F5E6A3' : '#6B4E3D' }}
+        >
+          Welcome, <strong style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}>{loggedInUser}</strong>
         </p>
       )}
       
       {/* Subtitle */}
       <p 
-        className="text-xs text-indigo-400 dark:text-indigo-300 font-semibold text-center w-full" 
-        style={{letterSpacing: '0.05em'}}
+        className="text-xs font-semibold text-center w-full mb-4" 
+        style={{
+          letterSpacing: '0.05em',
+          color: darkMode ? '#D4AF37' : '#B8860B'
+        }}
       >
-        Beta 0.2.3
+        Beta 0.2.4
       </p>
       
       {/* Light/Dark mode toggle */}
       <button 
         onClick={toggleDarkMode} 
-        className={
-          darkMode
-            ? "w-full p-2 border rounded bg-gray-700 text-white pt-3 mb-4"
-            : "w-full p-2 border rounded bg-gray-200 text-indigo-700 pt-3 mb-4"
-        }
+        className="w-full p-3 border rounded-lg font-semibold transition-all duration-300 mb-4"
+        style={{
+          background: darkMode 
+            ? 'linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%)' 
+            : 'linear-gradient(135deg, #F5E6A3 0%, #D4AF37 100%)',
+          color: darkMode ? '#D4AF37' : '#1a1a2e',
+          border: darkMode ? '1px solid #D4AF37' : '1px solid #B8860B',
+          boxShadow: darkMode 
+            ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+            : '0 4px 8px rgba(184, 134, 11, 0.3)'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'translateY(-1px)';
+          e.target.style.boxShadow = darkMode 
+            ? '0 6px 12px rgba(212, 175, 55, 0.3)' 
+            : '0 6px 12px rgba(184, 134, 11, 0.4)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = darkMode 
+            ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+            : '0 4px 8px rgba(184, 134, 11, 0.3)';
+        }}
       >
-        {darkMode ? "Light" : "Dark"} Mode
+        {darkMode ? "☀️ Light" : "🌙 Dark"} Mode
       </button>
       
       {/* Navigation tabs - match live site order and style */}
       <Link
         to="/gettingstarted"
         onClick={handleNavClick}
-        className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-          isActive("/gettingstarted")
-            ? "bg-indigo-600 text-white"
-            : darkMode
-              ? "bg-gray-700 text-white"
-              : "bg-gray-200 text-black"
-        }`}
-        style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+        className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
+        style={{
+          fontSize: '1.1rem',
+          ...getNavLinkStyles("/gettingstarted")
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive("/gettingstarted")) {
+            e.target.style.transform = 'translateX(4px)';
+            e.target.style.boxShadow = darkMode 
+              ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+              : '0 4px 8px rgba(184, 134, 11, 0.3)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive("/gettingstarted")) {
+            e.target.style.transform = 'translateX(0)';
+            e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+          }
+        }}
       >
         Getting Started
       </Link>
@@ -86,14 +175,25 @@ function Sidebar({
           <Link
             to="/post"
             onClick={handleNavClick}
-            className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-              isActive("/post")
-                ? "bg-indigo-600 text-white"
-                : darkMode
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-200 text-black"
-            }`}
-            style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+            className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
+            style={{
+              fontSize: '1.1rem',
+              ...getNavLinkStyles("/post")
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive("/post")) {
+                e.target.style.transform = 'translateX(4px)';
+                e.target.style.boxShadow = darkMode 
+                  ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+                  : '0 4px 8px rgba(184, 134, 11, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive("/post")) {
+                e.target.style.transform = 'translateX(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+              }
+            }}
           >
             Post Listing
           </Link>
@@ -102,14 +202,25 @@ function Sidebar({
       <Link
         to="/alllistings"
         onClick={handleNavClick}
-        className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-          isActive("/alllistings")
-            ? "bg-indigo-600 text-white"
-            : darkMode
-              ? "bg-gray-700 text-white"
-              : "bg-gray-200 text-black"
-        }`}
-        style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+        className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
+        style={{
+          fontSize: '1.1rem',
+          ...getNavLinkStyles("/alllistings")
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive("/alllistings")) {
+            e.target.style.transform = 'translateX(4px)';
+            e.target.style.boxShadow = darkMode 
+              ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+              : '0 4px 8px rgba(184, 134, 11, 0.3)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive("/alllistings")) {
+            e.target.style.transform = 'translateX(0)';
+            e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+          }
+        }}
       >
         All Listings
       </Link>
@@ -118,14 +229,25 @@ function Sidebar({
           <Link
             to="/mylistings"
             onClick={handleNavClick}
-            className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-              isActive("/mylistings")
-                ? "bg-indigo-600 text-white"
-                : darkMode
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-200 text-black"
-            }`}
-            style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+            className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
+            style={{
+              fontSize: '1.1rem',
+              ...getNavLinkStyles("/mylistings")
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive("/mylistings")) {
+                e.target.style.transform = 'translateX(4px)';
+                e.target.style.boxShadow = darkMode 
+                  ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
+                  : '0 4px 8px rgba(184, 134, 11, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive("/mylistings")) {
+                e.target.style.transform = 'translateX(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+              }
+            }}
           >
             My Listings
           </Link>
@@ -137,16 +259,34 @@ function Sidebar({
         <Link
           to="/adminpanel"
           onClick={handleNavClick}
-          className={`w-full text-left px-4 py-2 rounded-lg font-semibold transition ${
-            isActive("/adminpanel")
-              ? "bg-indigo-600 text-white"
-              : darkMode
-                ? "bg-gray-700 text-white"
-                : "bg-gray-200 text-black"
-          }`}
-          style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}
+          className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
+          style={{
+            fontSize: '1.1rem',
+            ...getNavLinkStyles("/adminpanel"),
+            background: isActive("/adminpanel") 
+              ? 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)'
+              : darkMode 
+                ? 'linear-gradient(135deg, rgba(42, 42, 62, 0.6) 0%, rgba(26, 26, 46, 0.6) 100%)'
+                : 'linear-gradient(135deg, rgba(245, 230, 163, 0.3) 0%, rgba(248, 249, 250, 0.8) 100%)',
+            border: `1px solid ${darkMode ? '#D4AF37' : '#B8860B'}`,
+            boxShadow: isActive("/adminpanel") 
+              ? '0 4px 8px rgba(212, 175, 55, 0.4)'
+              : '0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseEnter={(e) => {
+            if (!isActive("/adminpanel")) {
+              e.target.style.transform = 'translateX(4px)';
+              e.target.style.boxShadow = '0 4px 8px rgba(212, 175, 55, 0.3)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isActive("/adminpanel")) {
+              e.target.style.transform = 'translateX(0)';
+              e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            }
+          }}
         >
-          Admin Panel
+          👑 Admin Panel
         </Link>
       )}
       
@@ -155,26 +295,58 @@ function Sidebar({
         {/* Login/Logout button */}
         {loggedInUser ? (
           <button 
-            className="w-full bg-red-500 hover:bg-red-600 transition text-white px-4 py-2 rounded" 
+            className="w-full px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+              color: 'white',
+              border: '1px solid #dc3545',
+              boxShadow: '0 4px 8px rgba(220, 53, 69, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 6px 12px rgba(220, 53, 69, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 8px rgba(220, 53, 69, 0.3)';
+            }}
             onClick={() => {
               logout();
               handleNavClick();
             }}
           >
-            Logout
+            🚪 Logout
           </button>
         ) : (
           <a
             href={"/api/auth/discord"}
             onClick={handleNavClick}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white px-4 py-2 rounded text-center block"
+            className="w-full px-4 py-3 rounded-lg font-semibold transition-all duration-300 text-center block mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+              color: 'white',
+              textDecoration: 'none',
+              border: '1px solid #5865F2',
+              boxShadow: '0 4px 8px rgba(88, 101, 242, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 6px 12px rgba(88, 101, 242, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 8px rgba(88, 101, 242, 0.3)';
+            }}
           >
-            Login with Discord
+            🎮 Login with Discord
           </a>
         )}
 
         {/* External Resources header */}
-        <h3 className={`text-sm font-semibold text-center mb-1 ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+        <h3 
+          className="text-sm font-semibold text-center mb-3"
+          style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}
+        >
           External Resources
         </h3>
         {/* External links in 2x4 grid, no overlap */}

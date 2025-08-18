@@ -132,12 +132,17 @@ function ItemCard(props) {
 
   const QuantityTypeUser = () => (
     <div className="text-center">
-      <div className="text-lg font-semibold mb-1">{quantity}x</div>
-      <div className={`px-2 py-1 rounded text-xs font-bold ${
-        type === "buy" 
-          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
-          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-      }`}>
+      <div className="text-base font-semibold mb-1">{quantity}x</div>
+      <div 
+        className="px-2 py-1 rounded text-sm font-bold"
+        style={{
+          background: type === "buy" 
+            ? (darkMode ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)')
+            : (darkMode ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)'),
+          color: type === "buy" ? '#059669' : '#DC2626',
+          border: `1px solid ${type === "buy" ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+        }}
+      >
         {type === "buy" ? "Buying" : "Selling"}
       </div>
       
@@ -158,7 +163,7 @@ function ItemCard(props) {
   const ItemTitle = () => (
     <div className="mb-2">
       <h3 className={
-        `text-xl font-bold break-words ` +
+        `text-lg font-bold break-words ` +
         (darkMode ? 'text-white' : 'text-gray-900')
       }>
         {item}
@@ -171,11 +176,19 @@ function ItemCard(props) {
       {isListing ? (
         /* Listing Mode */
         <li
-          className={
-            `border rounded-xl p-4 shadow-sm flex flex-row justify-between items-stretch relative gap-4 ` +
-            (darkMode ? 'text-white bg-[#1f2937]' : 'text-black bg-[#f9fafb]')
-          }
-          style={{ minHeight: '200px' }}
+          className="border rounded-xl p-4 shadow-lg flex flex-row justify-between items-stretch relative gap-4 transition-all duration-300 hover:scale-102"
+          style={{ 
+            minHeight: '200px',
+            background: darkMode 
+              ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+            color: darkMode ? '#F5E6A3' : '#6B4E3D',
+            border: '1px solid #FFD700',
+            backdropFilter: 'blur(10px)',
+            boxShadow: darkMode 
+              ? '0 8px 32px rgba(212, 175, 55, 0.15)'
+              : '0 8px 32px rgba(184, 134, 11, 0.15)',
+          }}
         >
           <div className="flex flex-row gap-4 flex-1 min-w-0 items-stretch">
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
@@ -197,14 +210,20 @@ function ItemCard(props) {
                   <div className="mt-2 text-sm">
                     <div className="flex flex-wrap gap-2 items-center">
                       {getField("Episode") && getField("Episode") !== "None" && (
-                        <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${
-                          getField("Episode") === 'Hopeforest' ? 'border-green-500' :
-                          getField("Episode") === 'Hopeport' ? 'border-yellow-500' :
-                          getField("Episode") === 'Mine of Mantuban' ? 'border-blue-500' :
-                          getField("Episode") === 'Crenopolis' ? 'border-gray-500' :
-                          getField("Episode") === 'Stonemaw Hill' ? 'border-orange-500' :
-                          'border-gray-300'
-                        }`}>
+                        <div 
+                          className="inline-flex items-center gap-1 border-2 rounded px-2 py-1"
+                          style={{
+                            background: darkMode 
+                              ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                            borderColor: getField("Episode") === 'Hopeforest' ? '#10B981' :
+                              getField("Episode") === 'Hopeport' ? '#F59E0B' :
+                              getField("Episode") === 'Mine of Mantuban' ? '#3B82F6' :
+                              getField("Episode") === 'Crenopolis' ? '#6B7280' :
+                              getField("Episode") === 'Stonemaw Hill' ? '#F97316' :
+                              (darkMode ? 'rgba(212, 175, 55, 0.5)' : 'rgba(184, 134, 11, 0.5)')
+                          }}
+                        >
                           {episodeImages[getField("Episode")] && (
                             <img src={episodeImages[getField("Episode")]} alt={getField("Episode")} title={getField("Episode")} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
@@ -212,7 +231,15 @@ function ItemCard(props) {
                         </div>
                       )}
                       {getField("Profession A") && getField("Profession A") !== "Combat" && getField("Profession A") !== "None" && (
-                        <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <div 
+                          className="inline-flex items-center gap-1 border rounded px-2 py-1"
+                          style={{
+                            background: darkMode 
+                              ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                            borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'
+                          }}
+                        >
                           {professionImages[getField("Profession A")] && (
                             <img src={professionImages[getField("Profession A")]} alt={getField("Profession A")} title={getField("Profession A")} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
@@ -222,7 +249,16 @@ function ItemCard(props) {
                         </div>
                       )}
                       {Array.isArray(professionsB) && professionsB.map((prof, idx) => (
-                        <div key={prof + idx} className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <div 
+                          key={prof + idx} 
+                          className="inline-flex items-center gap-1 border rounded px-2 py-1"
+                          style={{
+                            background: darkMode 
+                              ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                            borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'
+                          }}
+                        >
                           {professionImages[prof] && (
                             <img src={professionImages[prof]} alt={prof} title={prof} className="h-3 w-3 object-contain flex-shrink-0" />
                           )}
@@ -240,7 +276,15 @@ function ItemCard(props) {
                   <div className="mt-1">
                     {/* Combat level */}
                     <div className="mb-2">
-                      <div className="inline-flex items-center gap-2 border rounded px-2 py-1 bg-gray-100 dark:bg-gray-700">
+                      <div 
+                        className="inline-flex items-center gap-2 border rounded px-2 py-1"
+                        style={{
+                          background: darkMode 
+                            ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                          borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'
+                        }}
+                      >
                         {professionImages.Combat && (
                           <img src={professionImages.Combat} alt="Combat" title="Combat" className="h-4 w-4 object-contain flex-shrink-0" />
                         )}
@@ -264,10 +308,10 @@ function ItemCard(props) {
 
                 {/* Notes - show if notes exist and are not empty */}
                 {notes && notes.trim() && (
-                  <div className="mt-2 text-sm">
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500">
-                      <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 text-xs">Notes:</div>
-                      <div className="text-gray-700 dark:text-gray-300 text-xs break-words">{notes.trim()}</div>
+                  <div className="mt-2 pb-4">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4" style={{ borderLeft: '4px solid #FFD700' }}>
+                      <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 text-sm">Notes:</div>
+                      <div className="text-gray-700 dark:text-gray-300 text-sm break-words">{notes.trim()}</div>
                     </div>
                   </div>
                 )}
@@ -336,7 +380,13 @@ function ItemCard(props) {
                   <div className="relative group">
                     <button
                       onClick={onEdit}
-                      className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors cursor-pointer border border-blue-600 hover:border-blue-800 dark:border-blue-400 dark:hover:border-blue-200 rounded w-8 h-8 flex items-center justify-center"
+                      className="w-8 h-8 flex items-center justify-center rounded transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2"
+                      style={{
+                        color: '#3B82F6',
+                        background: darkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        focusRingColor: '#3B82F6'
+                      }}
                       aria-label="Edit listing"
                     >
                       ✎
@@ -348,7 +398,13 @@ function ItemCard(props) {
                   <div className="relative group">
                     <button
                       onClick={onDelete}
-                      className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 transition-colors cursor-pointer border border-red-600 hover:border-red-800 dark:border-red-400 dark:hover:border-red-200 rounded w-8 h-8 flex items-center justify-center"
+                      className="w-8 h-8 flex items-center justify-center rounded transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2"
+                      style={{
+                        color: '#DC2626',
+                        background: darkMode ? 'rgba(220, 38, 38, 0.1)' : 'rgba(220, 38, 38, 0.05)',
+                        border: '1px solid rgba(220, 38, 38, 0.3)',
+                        focusRingColor: '#DC2626'
+                      }}
                     >
                       ✕
                     </button>
@@ -361,7 +417,12 @@ function ItemCard(props) {
               
               {/* Timestamp below edit/delete buttons */}
               {isListing && timestamp && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                <div 
+                  className="text-xs text-right"
+                  style={{
+                    color: darkMode ? 'rgba(245, 230, 163, 0.6)' : 'rgba(107, 78, 61, 0.6)'
+                  }}
+                >
                   {formatTimeAgo(timestamp)}
                 </div>
               )}
@@ -372,16 +433,26 @@ function ItemCard(props) {
             
             {/* Bottom section: price */}
             <div className="flex flex-col items-end">
-              <span className="font-semibold text-green-600" style={{
-                background: darkMode ? '#1f2937' : '#f9fafb',
-                padding: '0.25em 0.75em',
-                borderRadius: '0.5em',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                fontSize: '1.1em',
-                display: 'inline-block',
-                minWidth: 'max-content',
-                textAlign: 'right'
-              }}>
+              <span 
+                className="font-semibold"
+                style={{
+                  background: darkMode 
+                    ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 250, 0.8) 100%)',
+                  color: darkMode ? '#D4AF37' : '#B8860B',
+                  padding: '0.5em 0.75em',
+                  borderRadius: '0.75em',
+                  border: `1px solid ${darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'}`,
+                  boxShadow: darkMode 
+                    ? '0 4px 15px rgba(212, 175, 55, 0.2)'
+                    : '0 4px 15px rgba(184, 134, 11, 0.2)',
+                  fontSize: '1.1em',
+                  display: 'inline-block',
+                  minWidth: 'max-content',
+                  textAlign: 'right',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '0.25em'}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
                     {formatPriceMedium(eachPrice)}
@@ -401,8 +472,31 @@ function ItemCard(props) {
       ) : (
         /* Preview Mode - keep existing preview layout */
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-center">Preview</h2>
-          <li className="bg-gray-50 border rounded-xl p-4 shadow-sm flex flex-row justify-between items-stretch dark:bg-gray-800 text-black dark:text-white relative gap-4" style={{ minHeight: '200px' }}>
+          <h2 
+            className="text-2xl font-semibold mb-4 text-center"
+            style={{
+              color: darkMode ? '#D4AF37' : '#B8860B',
+              textShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.1)',
+              fontFamily: 'serif'
+            }}
+          >
+            Preview
+          </h2>
+          <li 
+            className="border rounded-xl p-4 shadow-lg flex flex-row justify-between items-stretch relative gap-4 transition-all duration-300"
+            style={{ 
+              minHeight: '200px',
+              background: darkMode 
+                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+              color: darkMode ? '#F5E6A3' : '#6B4E3D',
+              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: darkMode 
+                ? '0 8px 32px rgba(212, 175, 55, 0.15)'
+                : '0 8px 32px rgba(184, 134, 11, 0.15)'
+            }}
+          >
             <div className="flex flex-row gap-4 flex-1 min-w-0 items-stretch">
               <div className="flex flex-col items-center gap-2 flex-shrink-0">
                 <ItemImage />
@@ -418,14 +512,20 @@ function ItemCard(props) {
                     <div className="mt-2 text-sm">
                       <div className="flex flex-wrap gap-2 items-center">
                         {itemInfo?.Episode && itemInfo.Episode !== "None" && (
-                          <div className={`inline-flex items-center gap-1 border-2 rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${
-                            itemInfo.Episode === 'Hopeforest' ? 'border-green-500' :
-                            itemInfo.Episode === 'Hopeport' ? 'border-yellow-500' :
-                            itemInfo.Episode === 'Mine of Mantuban' ? 'border-blue-500' :
-                            itemInfo.Episode === 'Crenopolis' ? 'border-gray-500' :
-                            itemInfo.Episode === 'Stonemaw Hill' ? 'border-orange-500' :
-                            'border-gray-300'
-                          }`}>
+                          <div 
+                            className="inline-flex items-center gap-1 border-2 rounded px-2 py-1"
+                            style={{
+                              background: darkMode 
+                                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                              borderColor: itemInfo.Episode === 'Hopeforest' ? '#10B981' :
+                                itemInfo.Episode === 'Hopeport' ? '#F59E0B' :
+                                itemInfo.Episode === 'Mine of Mantuban' ? '#3B82F6' :
+                                itemInfo.Episode === 'Crenopolis' ? '#6B7280' :
+                                itemInfo.Episode === 'Stonemaw Hill' ? '#F97316' :
+                                (darkMode ? 'rgba(212, 175, 55, 0.5)' : 'rgba(184, 134, 11, 0.5)')
+                            }}
+                          >
                             {episodeImages[itemInfo.Episode] && (
                               <img src={episodeImages[itemInfo.Episode]} alt={itemInfo.Episode} title={itemInfo.Episode} className="h-3 w-3 object-contain flex-shrink-0" />
                             )}
@@ -433,7 +533,15 @@ function ItemCard(props) {
                           </div>
                         )}
                         {itemInfo?.["Profession A"] && itemInfo["Profession A"] !== "Combat" && itemInfo["Profession A"] !== "None" && (
-                          <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <div 
+                            className="inline-flex items-center gap-1 border rounded px-2 py-1"
+                            style={{
+                              background: darkMode 
+                                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'
+                            }}
+                          >
                             {professionImages[itemInfo["Profession A"]] && (
                               <img src={professionImages[itemInfo["Profession A"]]} alt={itemInfo["Profession A"]} title={itemInfo["Profession A"]} className="h-3 w-3 object-contain flex-shrink-0" />
                             )}
@@ -443,7 +551,15 @@ function ItemCard(props) {
                           </div>
                         )}
                         {itemInfo?.["Profession B"] && itemInfo["Profession B"] !== "Combat" && itemInfo["Profession B"] !== "None" && itemInfo["Profession B"] !== itemInfo["Profession A"] && (
-                          <div className={`inline-flex items-center gap-1 border rounded px-2 py-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <div 
+                            className="inline-flex items-center gap-1 border rounded px-2 py-1"
+                            style={{
+                              background: darkMode 
+                                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%)'
+                                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 249, 250, 0.7) 100%)',
+                              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'
+                            }}
+                          >
                             {professionImages[itemInfo["Profession B"]] && (
                               <img src={professionImages[itemInfo["Profession B"]]} alt={itemInfo["Profession B"]} title={itemInfo["Profession B"]} className="h-3 w-3 object-contain flex-shrink-0" />
                             )}
@@ -485,7 +601,7 @@ function ItemCard(props) {
                   {/* Notes - show if notes exist and are not empty */}
                   {notes && notes.trim() && (
                     <div className="mt-2 text-sm">
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-yellow-500" style={{ borderLeft: '4px solid #FFD700' }}>
                         <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 text-xs">Notes:</div>
                         <div className="text-gray-700 dark:text-gray-300 text-xs break-words">{notes.trim()}</div>
                       </div>
@@ -552,25 +668,49 @@ function ItemCard(props) {
               
               {/* Price at bottom */}
               <div className="flex flex-col items-end">
-                <span className="font-semibold text-green-600" style={{
-                  background: darkMode ? '#1f2937' : '#f9fafb',
-                  padding: '0.25em 0.75em',
-                  borderRadius: '0.5em',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  fontSize: '1.1em',
-                  display: 'inline-block',
-                  minWidth: 'max-content',
-                  textAlign: 'right'
-                }}>
+                <span 
+                  className="font-semibold"
+                  style={{
+                    background: darkMode 
+                      ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 250, 0.8) 100%)',
+                    color: darkMode ? '#D4AF37' : '#B8860B',
+                    padding: '0.5em 0.75em',
+                    borderRadius: '0.75em',
+                    border: `1px solid ${darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'}`,
+                    boxShadow: darkMode 
+                      ? '0 4px 15px rgba(212, 175, 55, 0.2)'
+                      : '0 4px 15px rgba(184, 134, 11, 0.2)',
+                    fontSize: '1.1em',
+                    display: 'inline-block',
+                    minWidth: 'max-content',
+                    textAlign: 'right',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
                   <div style={{display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '0.25em'}}>
                     <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
                       {formatPriceMedium(eachPrice)}
-                      <span className="text-xs font-normal text-gray-400">each</span>
+                      <span 
+                        className="text-xs font-normal"
+                        style={{
+                          color: darkMode ? 'rgba(245, 230, 163, 0.7)' : 'rgba(107, 78, 61, 0.7)'
+                        }}
+                      >
+                        each
+                      </span>
                     </div>
                     {quantity && Number(quantity) > 1 && (
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5em'}}>
                         {formatPriceMedium(totalPrice)}
-                        <span className="text-xs font-normal text-gray-400">total</span>
+                        <span 
+                          className="text-xs font-normal"
+                          style={{
+                            color: darkMode ? 'rgba(245, 230, 163, 0.7)' : 'rgba(107, 78, 61, 0.7)'
+                          }}
+                        >
+                          total
+                        </span>
                       </div>
                     )}
                   </div>

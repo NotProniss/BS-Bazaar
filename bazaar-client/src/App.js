@@ -363,26 +363,71 @@ function AppContent() {
           />
         </div>
         
-        <main className={`flex-1 flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}> 
+        <main 
+          className="flex-1 flex flex-col"
+          style={{
+            background: darkMode 
+              ? 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)'
+              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
+          }}
+        > 
           {/* Hamburger menu - now visible on both mobile and desktop */}
-          <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-sm">
+          <div 
+            className="flex items-center justify-between p-4 shadow-sm"
+            style={{
+              background: darkMode 
+                ? 'linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%)'
+                : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              borderBottom: `2px solid ${darkMode ? '#D4AF37' : '#B8860B'}`
+            }}
+          >
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="p-2 rounded-md transition-all duration-300 focus:outline-none focus:ring-2"
+              style={{
+                color: darkMode ? '#D4AF37' : '#B8860B',
+                backgroundColor: 'transparent',
+                focusRingColor: darkMode ? '#D4AF37' : '#B8860B'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = darkMode ? 'rgba(212, 175, 55, 0.1)' : 'rgba(184, 134, 11, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+              }}
               aria-label="Toggle sidebar"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-indigo-700'}`}>
+            <h1 
+              className="text-xl font-bold"
+              style={{ 
+                color: darkMode ? '#D4AF37' : '#B8860B',
+                textShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.5)' : '0 1px 2px rgba(0,0,0,0.1)',
+                fontFamily: 'serif'
+              }}
+            >
               BS Bazaar
             </h1>
             <div className="w-10"></div> {/* Spacer for centering */}
           </div>
           
           <div className="flex-1 py-4 lg:py-10 px-4">
-            <div className={darkMode ? "max-w-3xl mx-auto bg-gray-800 p-6 rounded-2xl shadow-lg" : "max-w-3xl mx-auto bg-gray-50 p-6 rounded-2xl shadow-lg"}>
+            <div 
+              className="max-w-3xl mx-auto p-6 rounded-2xl shadow-lg"
+              style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(42, 42, 62, 0.95) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%)',
+                border: `1px solid ${darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)'}`,
+                boxShadow: darkMode 
+                  ? '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
+                  : '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
               {/* Header removed from main area. Now only in sidebar. */}
               {/* ...existing code... */}
               <Routes>
@@ -487,7 +532,7 @@ function AppContent() {
                     darkMode={darkMode}
                   />
                 } />
-                <Route path="/adminpanel" element={<AdminDashboard onRefreshListings={fetchListings} />} />
+                <Route path="/adminpanel" element={<AdminDashboard onRefreshListings={fetchListings} darkMode={darkMode} />} />
                 <Route path="*" element={<Navigate to="/alllistings" replace />} />
               </Routes>
             </div>

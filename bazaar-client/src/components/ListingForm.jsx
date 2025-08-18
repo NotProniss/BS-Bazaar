@@ -213,7 +213,12 @@ function ListingForm({
     <div className={`mb-6 grid gap-3 max-w-4xl mx-auto ${darkMode ? 'bg-gray-800 border border-gray-800' : ''}`}> 
       {/* Item selection and type */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1 dark:text-white">Item</label>
+        <label 
+          className="block text-sm font-medium mb-1"
+          style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}
+        >
+          Item
+        </label>
         <div className="flex gap-2 items-center">
           <ItemDropdown 
             item={item}
@@ -298,7 +303,12 @@ function ListingForm({
 
       {/* IGN only */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1 dark:text-white">IGN</label>
+        <label 
+          className="block text-sm font-medium mb-1"
+          style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}
+        >
+          IGN
+        </label>
         <input
           type="text"
           value={IGN}
@@ -315,7 +325,12 @@ function ListingForm({
 
       {/* Notes field */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1 dark:text-white">Notes</label>
+        <label 
+          className="block text-sm font-medium mb-1"
+          style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}
+        >
+          Notes
+        </label>
         <textarea
           value={notes || ''}
           onChange={(e) => {
@@ -371,13 +386,41 @@ function ListingForm({
       <div className="flex gap-3 mt-6">
         <button
           onClick={handleSubmit}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700 transition text-white dark:text-white px-4 py-2 rounded"
+          className="flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-300"
+          style={{
+            background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+            color: '#1a1a2e',
+            border: '1px solid #D4AF37',
+            boxShadow: '0 4px 8px rgba(212, 175, 55, 0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-1px)';
+            e.target.style.boxShadow = '0 6px 12px rgba(212, 175, 55, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 8px rgba(212, 175, 55, 0.3)';
+          }}
         >
           {editingId ? "Update Listing" : "Post Listing"}
         </button>
         <button
           onClick={onCancel}
-          className="flex-1 bg-red-500 hover:bg-red-600 transition text-white dark:text-white px-4 py-2 rounded"
+          className="flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-300"
+          style={{
+            background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+            color: 'white',
+            border: '1px solid #dc3545',
+            boxShadow: '0 4px 8px rgba(220, 53, 69, 0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-1px)';
+            e.target.style.boxShadow = '0 6px 12px rgba(220, 53, 69, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 8px rgba(220, 53, 69, 0.3)';
+          }}
         >
           Cancel
         </button>

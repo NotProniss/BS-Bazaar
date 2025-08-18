@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 
-const AdminPanel = () => (
+const AdminPanel = ({ darkMode }) => (
   <>
     <Helmet>
       {/* PostHog tracking snippet */}
@@ -20,8 +20,25 @@ const AdminPanel = () => (
         `}
       </script>
     </Helmet>
-    <div className="text-center py-10 bg-transparent dark:text-white text-black">
-    <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
+    <div 
+      className="text-center py-10"
+      style={{
+        background: darkMode 
+          ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.5) 0%, rgba(42, 42, 62, 0.5) 100%)'
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(248, 249, 250, 0.5) 100%)',
+        color: darkMode ? '#F5E6A3' : '#6B4E3D'
+      }}
+    >
+    <h2 
+      className="text-2xl font-bold mb-4"
+      style={{
+        color: darkMode ? '#D4AF37' : '#B8860B',
+        textShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.1)',
+        fontFamily: 'serif'
+      }}
+    >
+      Admin Panel
+    </h2>
     <p>Admin features coming soon.</p>
   </div>
   </>

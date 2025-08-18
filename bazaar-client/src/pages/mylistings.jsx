@@ -120,22 +120,63 @@ const MyListingsPage = ({
       </Helmet>
       {/* ...existing page content... */}
       <div>
-      <h2 className={darkMode ? "text-5xl font-bold text-white text-center mb-6" : "text-5xl font-bold text-gray-900 text-center mb-6"}>My Listings</h2>
+      <h2 
+        className="text-5xl font-bold text-center mb-6"
+        style={{
+          color: darkMode ? '#D4AF37' : '#B8860B',
+          textShadow: darkMode ? '0 4px 8px rgba(0,0,0,0.5)' : '0 2px 4px rgba(0,0,0,0.1)',
+          fontFamily: 'serif'
+        }}
+      >
+        My Listings
+      </h2>
       <div className="mb-4 flex flex-col gap-2 md:gap-4 justify-between items-center">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <input
             id="search"
-            className={`border rounded px-3 py-2 w-full md:w-48 ${darkMode ? 'bg-gray-800 text-white border-gray-700 placeholder-gray-400' : 'bg-white text-gray-900 border-gray-300 placeholder-gray-500'}`}
+            className="border rounded px-3 py-2 w-full md:w-48 transition-all duration-300 focus:outline-none focus:ring-2"
+            style={{
+              background: darkMode 
+                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+              color: darkMode ? '#F5E6A3' : '#6B4E3D',
+              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              focusRingColor: darkMode ? '#D4AF37' : '#B8860B'
+            }}
             type="text"
             placeholder="Search items..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = darkMode ? '#D4AF37' : '#B8860B';
+              e.target.style.boxShadow = `0 0 0 2px ${darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(184, 134, 11, 0.2)'}`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)';
+              e.target.style.boxShadow = 'none';
+            }}
           />
           <select
             id="type"
-            className={`border rounded px-3 py-2 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'}`}
+            className="border rounded px-3 py-2 transition-all duration-300 focus:outline-none focus:ring-2"
+            style={{
+              background: darkMode 
+                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+              color: darkMode ? '#F5E6A3' : '#6B4E3D',
+              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              focusRingColor: darkMode ? '#D4AF37' : '#B8860B'
+            }}
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = darkMode ? '#D4AF37' : '#B8860B';
+              e.target.style.boxShadow = `0 0 0 2px ${darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(184, 134, 11, 0.2)'}`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <option value="all">All</option>
             <option value="buy">Buy</option>
@@ -143,9 +184,25 @@ const MyListingsPage = ({
           </select>
           <select
             id="sort"
-            className={`border rounded px-3 py-2 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'}`}
+            className="border rounded px-3 py-2 transition-all duration-300 focus:outline-none focus:ring-2"
+            style={{
+              background: darkMode 
+                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+              color: darkMode ? '#F5E6A3' : '#6B4E3D',
+              borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              focusRingColor: darkMode ? '#D4AF37' : '#B8860B'
+            }}
             value={sortOrder}
             onChange={e => setSortOrder(e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = darkMode ? '#D4AF37' : '#B8860B';
+              e.target.style.boxShadow = `0 0 0 2px ${darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(184, 134, 11, 0.2)'}`;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <option value="asc">Price: Low to High (each)</option>
             <option value="desc">Price: High to Low (each)</option>
@@ -160,8 +217,23 @@ const MyListingsPage = ({
           <div className="relative">
             <button
               type="button"
-              className={`border rounded px-3 py-2 flex items-center min-w-[140px] ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'}`}
+              className="border rounded px-3 py-2 flex items-center min-w-[140px] transition-all duration-300 focus:outline-none focus:ring-2"
+              style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+                color: darkMode ? '#F5E6A3' : '#6B4E3D',
+                borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              }}
               onClick={() => setShowEpisodeDropdown((v) => !v)}
+              onFocus={(e) => {
+                e.target.style.borderColor = darkMode ? '#D4AF37' : '#B8860B';
+                e.target.style.boxShadow = `0 0 0 2px ${darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(184, 134, 11, 0.2)'}`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)';
+                e.target.style.boxShadow = 'none';
+              }}
             >
               {episodeFilter === 'all' ? 'All Episodes' : (
                 <>
@@ -172,11 +244,31 @@ const MyListingsPage = ({
               <span className="ml-auto">▼</span>
             </button>
             {showEpisodeDropdown && (
-              <div className={`absolute z-10 left-0 mt-1 w-full rounded shadow-lg max-h-60 overflow-y-auto ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border`}>
+              <div 
+                className="absolute z-10 left-0 mt-1 w-full rounded shadow-lg max-h-60 overflow-y-auto border"
+                style={{
+                  background: darkMode 
+                    ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(42, 42, 62, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%)',
+                  borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
                 {uniqueEpisodes.map(ep => (
                   <div
                     key={ep}
-                    className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-200 ${darkMode ? 'hover:bg-gray-700' : ''}`}
+                    className="flex items-center px-3 py-2 cursor-pointer transition-all duration-200"
+                    style={{
+                      color: darkMode ? '#F5E6A3' : '#6B4E3D'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = darkMode 
+                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%)'
+                        : 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(184, 134, 11, 0.1) 100%)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}
                     onClick={() => { setEpisodeFilter(ep); setShowEpisodeDropdown(false); }}
                   >
                     {ep === 'all' ? 'All Episodes' : (
@@ -195,8 +287,23 @@ const MyListingsPage = ({
           <div className="relative">
             <button
               type="button"
-              className={`border rounded px-3 py-2 flex items-center min-w-[140px] ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'}`}
+              className="border rounded px-3 py-2 flex items-center min-w-[140px] transition-all duration-300 focus:outline-none focus:ring-2"
+              style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(42, 42, 62, 0.8) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+                color: darkMode ? '#F5E6A3' : '#6B4E3D',
+                borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+              }}
               onClick={() => setShowProfessionDropdown((v) => !v)}
+              onFocus={(e) => {
+                e.target.style.borderColor = darkMode ? '#D4AF37' : '#B8860B';
+                e.target.style.boxShadow = `0 0 0 2px ${darkMode ? 'rgba(212, 175, 55, 0.2)' : 'rgba(184, 134, 11, 0.2)'}`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)';
+                e.target.style.boxShadow = 'none';
+              }}
             >
               {professionFilter === 'all' ? 'All Professions' : (
                 <>
@@ -207,11 +314,31 @@ const MyListingsPage = ({
               <span className="ml-auto">▼</span>
             </button>
             {showProfessionDropdown && (
-              <div className={`absolute z-10 left-0 mt-1 w-full rounded shadow-lg max-h-60 overflow-y-auto ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border`}>
+              <div 
+                className="absolute z-10 left-0 mt-1 w-full rounded shadow-lg max-h-60 overflow-y-auto border"
+                style={{
+                  background: darkMode 
+                    ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(42, 42, 62, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%)',
+                  borderColor: darkMode ? 'rgba(212, 175, 55, 0.3)' : 'rgba(184, 134, 11, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
                 {uniqueProfessions.map(prof => (
                   <div
                     key={prof}
-                    className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-200 ${darkMode ? 'hover:bg-gray-700' : ''}`}
+                    className="flex items-center px-3 py-2 cursor-pointer transition-all duration-200"
+                    style={{
+                      color: darkMode ? '#F5E6A3' : '#6B4E3D'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = darkMode 
+                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%)'
+                        : 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(184, 134, 11, 0.1) 100%)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}
                     onClick={() => { setProfessionFilter(prof); setShowProfessionDropdown(false); }}
                   >
                     {prof === 'all' ? 'All Professions' : (
@@ -229,7 +356,12 @@ const MyListingsPage = ({
       </div>
 
       {/* Active Listings summary */}
-      <div className={darkMode ? "text-xs font-medium text-white text-right mb-2 pr-2" : "text-xs font-medium text-gray-700 text-right mb-2 pr-2"}>
+      <div 
+        className="text-xs font-medium text-right mb-2 pr-2"
+        style={{
+          color: darkMode ? '#F5E6A3' : '#6B4E3D'
+        }}
+      >
         {(() => {
           const activeCount = userListings.filter(listing => {
             const itemInfo = itemData.find(i => i.Items === listing.item);
@@ -248,7 +380,14 @@ const MyListingsPage = ({
           const matchesProfession = professionFilter === 'all' || (itemInfo && [itemInfo['Profession A'], itemInfo['Profession B']].includes(professionFilter));
           return matchesEpisode && matchesProfession;
         }).length === 0 ? (
-          <div className="text-center text-gray-500">No listings found.</div>
+          <div 
+            className="text-center py-8"
+            style={{
+              color: darkMode ? '#F5E6A3' : '#6B4E3D'
+            }}
+          >
+            No listings found.
+          </div>
         ) : (
           <ul className="divide-y">
             {userListings

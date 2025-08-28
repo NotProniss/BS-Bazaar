@@ -8,7 +8,9 @@ function Sidebar({
   loggedInUser, 
   logout, 
   isAdmin,
-  closeSidebar
+  closeSidebar,
+  showLoginPopup,
+  setShowLoginPopup
 }) {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
@@ -227,15 +229,15 @@ function Sidebar({
       {loggedInUser && (
         <>
           <Link
-            to="/mylistings"
+            to="/myprofile"
             onClick={handleNavClick}
             className="w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 mb-2"
             style={{
               fontSize: '1.1rem',
-              ...getNavLinkStyles("/mylistings")
+              ...getNavLinkStyles("/myprofile")
             }}
             onMouseEnter={(e) => {
-              if (!isActive("/mylistings")) {
+              if (!isActive("/myprofile")) {
                 e.target.style.transform = 'translateX(4px)';
                 e.target.style.boxShadow = darkMode 
                   ? '0 4px 8px rgba(212, 175, 55, 0.2)' 
@@ -243,13 +245,13 @@ function Sidebar({
               }
             }}
             onMouseLeave={(e) => {
-              if (!isActive("/mylistings")) {
+              if (!isActive("/myprofile")) {
                 e.target.style.transform = 'translateX(0)';
                 e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }
             }}
           >
-            My Listings
+            👤 My Profile
           </Link>
         </>
       )}
@@ -318,28 +320,26 @@ function Sidebar({
             🚪 Logout
           </button>
         ) : (
-          <a
-            href={"/api/auth/discord"}
-            onClick={handleNavClick}
+          <button
             className="w-full px-4 py-3 rounded-lg font-semibold transition-all duration-300 text-center block mb-4"
             style={{
-              background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              border: '1px solid #5865F2',
-              boxShadow: '0 4px 8px rgba(88, 101, 242, 0.3)'
+              background: 'linear-gradient(135deg, #FFD700 0%, #B8860B 100%)',
+              color: '#1a1a2e',
+              border: '1px solid #FFD700',
+              boxShadow: '0 4px 8px rgba(212, 175, 55, 0.3)'
             }}
             onMouseEnter={(e) => {
               e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 6px 12px rgba(88, 101, 242, 0.4)';
+              e.target.style.boxShadow = '0 6px 12px rgba(212, 175, 55, 0.4)';
             }}
             onMouseLeave={(e) => {
               e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 8px rgba(88, 101, 242, 0.3)';
+              e.target.style.boxShadow = '0 4px 8px rgba(212, 175, 55, 0.3)';
             }}
+            onClick={() => setShowLoginPopup(true)}
           >
-            🎮 Login with Discord
-          </a>
+            Login
+          </button>
         )}
 
         {/* External Resources header */}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import ItemCard from '../components/ItemCard';
+import { joinApiUrl } from '../config';
 
 const MyListingsPage = ({
   listings = [],
@@ -28,7 +29,7 @@ const MyListingsPage = ({
     async function fetchData() {
       try {
         const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
-        const res = await fetch(`${BACKEND_URL}/api/items`);
+        const res = await fetch(joinApiUrl(BACKEND_URL, '/items'));
         if (!res.ok) throw new Error('Failed to fetch item data');
         const data = await res.json();
         setItemData(data);

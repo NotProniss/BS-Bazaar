@@ -3,6 +3,7 @@ import platinumImg from '../assets/Platinum.png';
 import goldImg from '../assets/Gold.png';
 import silverImg from '../assets/Silver.png';
 import copperImg from '../assets/Copper.png';
+import { joinApiUrl } from '../config';
 
 // Profession images
 import alchemistImg from '../assets/Alchemist.png';
@@ -48,7 +49,7 @@ import necromaeImg from '../assets/Necromae.png';
 export async function fetchItemData() {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
   try {
-    const res = await fetch(`${BACKEND_URL}/api/items`);
+    const res = await fetch(joinApiUrl(BACKEND_URL, '/items'));
     if (!res.ok) throw new Error('Failed to fetch item data');
     return await res.json();
   } catch (err) {

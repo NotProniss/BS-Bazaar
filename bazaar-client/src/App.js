@@ -5,13 +5,17 @@ import axios from 'axios';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import posthog from 'posthog-js';
 import Sidebar from './components/Sidebar';
+import LoginPopup from './components/LoginPopup';
 import Footer from './components/Footer';
 import AdminDashboard from './AdminDashboard';
+import Register from './pages/Register';
 import ListingsPage from './pages/alllistings';
 import PostPage from './pages/postlistings';
-import MyListings from './pages/mylistings';
+import MyProfile from './pages/myprofile';
 import TestPage from './pages/test';
 import AuthSuccess from './AuthSuccess';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import { jwtDecode } from 'jwt-decode';
 import GettingStarted from './pages/gettingstarted';
 
@@ -44,10 +48,16 @@ function AppContent() {
         description: 'Post your own listing to the BS Bazaar marketplace and reach other Brighter Shores players.'
       };
     }
+    if (location.pathname.startsWith('/myprofile')) {
+      return {
+        title: 'My Profile | BS Bazaar',
+        description: 'Manage your profile and listings on BS Bazaar - Brighter Shores Marketplace'
+      };
+    }
     if (location.pathname.startsWith('/mylistings')) {
       return {
-        title: 'My Listings | BS Bazaar',
-        description: 'View and manage your own listings on BS Bazaar.'
+        title: 'My Profile | BS Bazaar',
+        description: 'Manage your profile and listings on BS Bazaar - Brighter Shores Marketplace'
       };
     }
     if (location.pathname.startsWith('/adminpanel')) {
@@ -309,6 +319,9 @@ function AppContent() {
   const [darkMode, setDarkMode] = useState(true);
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
+  // Login popup state
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+
   // Sidebar collapse state for mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => {
@@ -360,6 +373,8 @@ function AppContent() {
             logout={logout}
             isAdmin={isAdmin}
             closeSidebar={closeSidebar}
+            showLoginPopup={showLoginPopup}
+            setShowLoginPopup={setShowLoginPopup}
           />
         </div>
         
@@ -432,6 +447,8 @@ function AppContent() {
               {/* ...existing code... */}
               <Routes>
                 <Route path="/auth-success" element={<AuthSuccess />} />
+                <Route path="/reset-password" element={<ResetPassword darkMode={darkMode} />} />
+                <Route path="/verify-email" element={<VerifyEmail darkMode={darkMode} />} />
                 <Route path="/test" element={<TestPage />} />
                 <Route path="/" element={<Navigate to="/alllistings" replace />} />
                 <Route path="/gettingstarted" element={<GettingStarted darkMode={darkMode} />} />
@@ -514,8 +531,8 @@ function AppContent() {
                     <div className="text-center text-white">Please log in to post a listing.</div>
                   )
                 } />
-                <Route path="/mylistings" element={
-                  <MyListings
+                <Route path="/myprofile" element={
+                  <MyProfile
                     listings={listings}
                     search={search}
                     setSearch={setSearch}
@@ -532,13 +549,31 @@ function AppContent() {
                     darkMode={darkMode}
                   />
                 } />
+                {/* Legacy route redirect */}
+                <Route path="/mylistings" element={<Navigate to="/myprofile" replace />} />
                 <Route path="/adminpanel" element={<AdminDashboard onRefreshListings={fetchListings} darkMode={darkMode} />} />
+                <Route path="/register" element={
+                  <Register 
+                    darkMode={darkMode}
+                    showLoginPopup={showLoginPopup}
+                    setShowLoginPopup={setShowLoginPopup}
+                  />
+                } />
                 <Route path="*" element={<Navigate to="/alllistings" replace />} />
               </Routes>
             </div>
           </div>
           <Footer />
         </main>
+        
+        {/* Login Popup - rendered at app level */}
+        {showLoginPopup && (
+          <LoginPopup
+            onClose={() => setShowLoginPopup(false)}
+            darkMode={darkMode}
+            closeSidebar={closeSidebar}
+          />
+        )}
       </div>
     </>
   );

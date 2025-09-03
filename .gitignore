@@ -8,11 +8,22 @@ dist/
 
 # Environment variables
 .env
+.env.*
 .env.dev
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+server/.env
+server/.env.*
+bazaar-server/.env
+bazaar-server/.env.*
+bazaar-client/.env
+bazaar-client/.env.*
+
+# Keep example files if needed
+!**/.env.example
+!**/.env.template
 
 # Logs
 npm-debug.log*

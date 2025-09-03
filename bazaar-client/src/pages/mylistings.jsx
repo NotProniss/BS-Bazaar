@@ -25,6 +25,10 @@ const MyListingsPage = ({
   const [professionFilter, setProfessionFilter] = React.useState('all');
   // Fetch item data from backend API
   const [itemData, setItemData] = React.useState([]);
+  
+  // User data state to get current username
+  const [currentUser, setCurrentUser] = React.useState(null);
+  
   React.useEffect(() => {
     async function fetchData() {
       try {
@@ -39,6 +43,32 @@ const MyListingsPage = ({
       }
     }
     fetchData();
+  }, []);
+  
+  // Fetch current user data from backend
+  React.useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) return;
+        
+        const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
+        const res = await fetch(joinApiUrl(BACKEND_URL, '/auth/me'), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          const userData = await res.json();
+          setCurrentUser(userData);
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
+    }
+    
+    fetchUserData();
   }, []);
   // Ordered episode list
   const episodeOrder = [
@@ -74,10 +104,12 @@ const MyListingsPage = ({
   ].includes(prof))];
 
   // Only show listings for the logged-in user
-  const userListings = listings.filter(listing =>
-    listing.seller && loggedInUser &&
-    listing.seller.trim().toLowerCase() === loggedInUser.trim().toLowerCase()
-  );
+  const userListings = listings.filter(listing => {
+    // Use currentUser.username if available, fallback to loggedInUser prop
+    const currentUsername = currentUser?.username || loggedInUser;
+    return listing.seller && currentUsername &&
+      listing.seller.trim().toLowerCase() === currentUsername.trim().toLowerCase();
+  });
 
   // Helper to get image src for episode/profession
   const getEpisodeImage = (ep) => {
@@ -452,20 +484,26 @@ const MyListingsPage = ({
                     combatTempestae={listing.combatTempestae || ""}
                     combatInfernae={listing.combatInfernae || ""}
                     combatNecromae={listing.combatNecromae || ""}
-                    loggedInUser={loggedInUser}
+                    loggedInUser={currentUser?.username || loggedInUser}
                     darkMode={darkMode}
                     isListing={true}
                     onEdit={
-                      loggedInUser && listing.seller &&
-                      listing.seller.trim().toLowerCase() === loggedInUser.trim().toLowerCase()
-                        ? () => startEditing(listing)
-                        : undefined
+                      (() => {
+                        const currentUsername = currentUser?.username || loggedInUser;
+                        return currentUsername && listing.seller &&
+                          listing.seller.trim().toLowerCase() === currentUsername.trim().toLowerCase()
+                          ? () => startEditing(listing)
+                          : undefined;
+                      })()
                     }
                     onDelete={
-                      loggedInUser && listing.seller &&
-                      listing.seller.trim().toLowerCase() === loggedInUser.trim().toLowerCase()
-                        ? () => deleteListing(listing.id)
-                        : undefined
+                      (() => {
+                        const currentUsername = currentUser?.username || loggedInUser;
+                        return currentUsername && listing.seller &&
+                          listing.seller.trim().toLowerCase() === currentUsername.trim().toLowerCase()
+                          ? () => deleteListing(listing.id)
+                          : undefined;
+                      })()
                     }
                     timestamp={listing.timestamp}
                     professionsB={professionsB}

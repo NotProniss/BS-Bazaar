@@ -1183,6 +1183,12 @@ const MyProfilePage = ({
                     const data = await response.json();
 
                     if (response.ok) {
+                      // Update the JWT token if a new one was provided
+                      if (data.newToken) {
+                        localStorage.setItem('jwtToken', data.newToken);
+                        console.log('JWT token updated with new username');
+                      }
+                      
                       setCurrentUser(prev => ({ ...prev, username: data.username }));
                       setIsEditingUsername(false);
                       setNewUsername('');

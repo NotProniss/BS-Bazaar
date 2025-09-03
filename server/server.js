@@ -871,8 +871,25 @@ app.post('/api/auth/update-username', authenticateJWT, async (req, res) => {
     const totalUpdated = updateResult.changes + discordUpdateResult.changes + legacyUpdateResult.changes;
     console.log(`[UPDATE] Updated ${updateResult.changes} listings with userId + ${discordUpdateResult.changes} discord ID listings + ${legacyUpdateResult.changes} legacy listings = ${totalUpdated} total for user ID ${userId} to username "${username.trim()}"`);
 
+    // Get updated user data
+    const updatedUser = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+    
+    // Generate new JWT token with updated username
+    const newToken = jwt.sign({
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      avatar: updatedUser.avatar,
+      auth_type: updatedUser.auth_type,
+      discord_id: updatedUser.discord_id
+    }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
     console.log(`[UPDATE] Username updated for user ID ${userId}: ${username.trim()}`);
-    res.json({ message: 'Username updated successfully', username: username.trim() });
+    res.json({ 
+      message: 'Username updated successfully', 
+      username: username.trim(),
+      newToken: newToken
+    });
     
   } catch (error) {
     console.error('Username update error:', error);
@@ -1050,7 +1067,7 @@ app.get('/api/auth/me', authenticateJWT, async (req, res) => {
     }
     
     res.json({
-      id: user.discord_id || user.id,
+      id: user.id,
       username: user.username,
       email: user.email,
       avatar: user.avatar,
@@ -1058,6 +1075,8 @@ app.get('/api/auth/me', authenticateJWT, async (req, res) => {
       authType: user.auth_type,
       hasPassword: !!user.password_hash,
       hasDiscord: !!user.discord_id,
+      discord_id: user.discord_id,
+      discord_username: user.discord_username,
       createdAt: user.created_at
     });
     

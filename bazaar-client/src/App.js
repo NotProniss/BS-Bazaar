@@ -208,10 +208,31 @@ function AppContent() {
       },
     };
 
-    // Use the listing object from ListingForm, but ensure seller is set
+    // Fetch current user data to get the most up-to-date username
+    let currentUsername = loggedInUser;
+    try {
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
+      const userRes = await fetch(`${BACKEND_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        currentUsername = userData.username;
+        // Update the local state as well
+        setLoggedInUser(userData.username);
+      }
+    } catch (err) {
+      console.error('Error fetching current user data:', err);
+      // Fall back to existing loggedInUser if fetch fails
+    }
+
+    // Use the listing object from ListingForm, but ensure seller is set to current username
     const listingData = {
       ...listing,
-      seller: loggedInUser,
+      seller: currentUsername,
     };
 
     console.log('[DEBUG] Sending listingData:', listingData);
@@ -525,6 +546,7 @@ function AppContent() {
                       addOrEditListing={addOrEditListing}
                       editingId={editingId}
                       resetForm={resetForm}
+                      loggedInUser={loggedInUser}
                       darkMode={darkMode}
                     />
                   ) : (

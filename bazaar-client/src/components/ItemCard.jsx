@@ -12,7 +12,6 @@ function ItemCard(props) {
     silver,
     copper,
     quantity,
-    IGN,
     notes,
     priceDisplayMode,
     combatCategory,
@@ -147,16 +146,11 @@ function ItemCard(props) {
       </div>
       
       {/* Discord username - always show */}
-      {/* <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap" title={isListing ? (listing?.seller || loggedInUser || "Anonymous") : (loggedInUser || "Anonymous")}>
-        {isListing ? (listing?.seller || loggedInUser || "Anonymous") : (loggedInUser || "Anonymous")}
-      </div> */}
       
-      {/* IGN - show if IGN exists, regardless of listing/preview mode */}
-      {IGN && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-all max-w-[80px]">
-          IGN: {IGN}
-        </div>
-      )}
+      {/* Display seller name for listings, current user for previews */}
+      <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap" title={isListing ? (listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}>
+        {isListing ? (listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
+      </div>
     </div>
   );
 

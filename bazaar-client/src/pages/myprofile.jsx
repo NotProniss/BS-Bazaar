@@ -235,7 +235,7 @@ const MyProfilePage = ({
                   : '0 4px 15px rgba(184, 134, 11, 0.3)'
               }}
             >
-              {loggedInUser ? loggedInUser.charAt(0).toUpperCase() : 'U'}
+              {(currentUser?.username || loggedInUser) ? (currentUser?.username || loggedInUser).charAt(0).toUpperCase() : 'U'}
             </div>
             
             {/* Profile Info */}
@@ -247,12 +247,13 @@ const MyProfilePage = ({
                   textShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.5)' : '0 1px 2px rgba(0,0,0,0.1)'
                 }}
               >
-                {loggedInUser || 'Guest User'}
+                {currentUser?.username || loggedInUser || 'Guest User'}
               </h1>
               <div 
                 className="text-sm mb-3"
                 style={{ color: darkMode ? '#F5E6A3' : '#6B4E3D' }}
               >
+                <div>User ID: #{currentUser?.id || 'Loading...'}</div>
                 <div>Member since: {profileStats.joinDate}</div>
                 <div>Status: {profileStats.lastActive}</div>
               </div>
@@ -1186,6 +1187,9 @@ const MyProfilePage = ({
                       setIsEditingUsername(false);
                       setNewUsername('');
                       setUsernameError('');
+                      
+                      // Show success message in console (you could add a toast notification here)
+                      console.log('Username updated successfully! All your listings have been updated to show the new username.');
                     } else {
                       setUsernameError(data.error || 'Failed to update username');
                     }

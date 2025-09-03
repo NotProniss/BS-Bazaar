@@ -843,10 +843,33 @@ app.post('/api/auth/update-username', authenticateJWT, async (req, res) => {
     }
 
     // Update username
+    const oldUsername = await db.get('SELECT username FROM users WHERE id = ?', [userId]);
     await db.run(
       'UPDATE users SET username = ?, updated_at = ? WHERE id = ?',
       [username.trim(), Date.now(), userId]
     );
+
+    // Update all listings by this user to use the new username
+    // Method 1: Update listings that have the correct userId (reliable)
+    const updateResult = await db.run(
+      'UPDATE listings SET seller = ?, IGN = ? WHERE userId = ?',
+      [username.trim(), username.trim(), userId]
+    );
+    
+    // Method 2: Update listings that might have Discord ID instead of database ID (edge case)
+    const discordUpdateResult = await db.run(
+      'UPDATE listings SET seller = ?, IGN = ?, userId = ? WHERE userId = ?',
+      [username.trim(), username.trim(), userId, req.user.discord_id]
+    );
+    
+    // Method 3: Update legacy listings without userId by matching old username (fallback)
+    const legacyUpdateResult = await db.run(
+      'UPDATE listings SET seller = ?, IGN = ?, userId = ? WHERE (userId IS NULL OR userId = "") AND seller = ?',
+      [username.trim(), username.trim(), userId, oldUsername.username]
+    );
+    
+    const totalUpdated = updateResult.changes + discordUpdateResult.changes + legacyUpdateResult.changes;
+    console.log(`[UPDATE] Updated ${updateResult.changes} listings with userId + ${discordUpdateResult.changes} discord ID listings + ${legacyUpdateResult.changes} legacy listings = ${totalUpdated} total for user ID ${userId} to username "${username.trim()}"`);
 
     console.log(`[UPDATE] Username updated for user ID ${userId}: ${username.trim()}`);
     res.json({ message: 'Username updated successfully', username: username.trim() });
@@ -1082,7 +1105,7 @@ app.post('/api/listings-old', authenticateJWT, async (req, res) => {
   const totalPrice = price * quantity;
   try {
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, sellerId, sellerAvatar, timestamp, IGN, priceMode, notes,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerAvatar, timestamp, IGN, priceMode, notes,
         combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
@@ -1091,11 +1114,11 @@ app.post('/api/listings-old', authenticateJWT, async (req, res) => {
       totalPrice,
       type,
       category,
-      req.user.username,
-      req.user.id,
+      req.user.username, // seller - current username
+      req.user.id, // userId - permanent ID
       req.user.avatar,
       Date.now(),
-      IGN || '',
+      req.user.username, // IGN - current username (for Discord bot compatibility)
       priceMode || 'Each',
       notes || '',
       combatCategory || '',
@@ -1130,7 +1153,7 @@ app.put('/api/listings/:id', authenticateJWT, async (req, res) => {
   try {
     const listing = await db.get('SELECT * FROM listings WHERE id = ?', req.params.id);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
-    if (listing.sellerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    if (listing.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
     const totalPrice = price * quantity;
     await db.run(`
@@ -1159,7 +1182,7 @@ app.delete('/api/listings/:id', authenticateJWT, async (req, res) => {
   try {
     const listing = await db.get('SELECT * FROM listings WHERE id = ?', req.params.id);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
-    if (listing.sellerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    if (listing.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
     await db.run('DELETE FROM listings WHERE id = ?', req.params.id);
     io.emit('listingDeleted', Number(req.params.id)); // Emit event
@@ -1587,7 +1610,7 @@ app.get('/api/listings', async (req, res) => {
 });
 
 // Create a new listing (API endpoint with validation)
-app.post('/api/listings', async (req, res) => {
+app.post('/api/listings', authenticateJWT, async (req, res) => {
   // DEBUG: Log incoming POST data for troubleshooting
   console.log('DEBUG /api/listings POST body:', req.body);
   const { 
@@ -1596,9 +1619,7 @@ app.post('/api/listings', async (req, res) => {
     quantity, 
     type, 
     category, 
-    IGN, 
     priceMode,
-    seller,
     contactInfo, // <-- added
     notes, // <-- added
     combatCategory, 
@@ -1616,9 +1637,9 @@ app.post('/api/listings', async (req, res) => {
   } = req.body;
 
   // Validation
-  if (!item || !price || !quantity || !type || !seller) {
+  if (!item || !price || !quantity || !type) {
     return res.status(400).json({ 
-      error: 'Missing required fields: item, price, quantity, type, seller' 
+      error: 'Missing required fields: item, price, quantity, type' 
     });
   }
 
@@ -1637,19 +1658,20 @@ app.post('/api/listings', async (req, res) => {
   try {
     const totalPrice = price * quantity;
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, sellerId, sellerAvatar, timestamp, contactInfo, priceMode, notes,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerAvatar, timestamp, IGN, contactInfo, priceMode, notes,
         combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
       price,
       quantity,
       totalPrice,
       type.toLowerCase(),
       category || '',
-      seller,
-      '', // sellerId - empty for API created listings
-      '', // sellerAvatar - empty for API created listings
+      req.user.username, // seller - use current username
+      req.user.id, // userId - use authenticated user's permanent ID  
+      req.user.avatar || '', // sellerAvatar - use authenticated user's avatar
       Date.now(),
+      req.user.username, // IGN field - use current username (for Discord bot compatibility)
       contactInfo || '',
       priceMode || 'Each',
       notes || '',
@@ -1730,7 +1752,7 @@ io.on('connection', (socket) => {
         type TEXT NOT NULL,
         category TEXT,
         seller TEXT NOT NULL,
-        sellerId TEXT,
+        userId TEXT,
         sellerAvatar TEXT,
         timestamp INTEGER NOT NULL,
         IGN TEXT,
@@ -1784,6 +1806,31 @@ io.on('connection', (socket) => {
     } catch (e) {
       console.log('User indexes may already exist:', e.message);
     }
+
+    // Add migration logic for users table columns (for production database compatibility)
+    const userColumns = [
+      'email TEXT UNIQUE',
+      'password_hash TEXT',
+      'discord_username TEXT',
+      'avatar TEXT',
+      'email_verified INTEGER DEFAULT 0',
+      'email_verification_token TEXT',
+      'password_reset_token TEXT',
+      'password_reset_expires INTEGER',
+      'auth_type TEXT DEFAULT \'local\'',
+      'created_at INTEGER',
+      'updated_at INTEGER'
+    ];
+    
+    for (const col of userColumns) {
+      try {
+        await db.exec(`ALTER TABLE users ADD COLUMN ${col}`);
+        console.log(`Added user column: ${col}`);
+      } catch (e) {
+        // Column already exists, ignore error
+      }
+    }
+
     try {
       await db.exec('ALTER TABLE listings ADD COLUMN rarity TEXT');
       console.log('Added column: rarity TEXT');
@@ -1796,7 +1843,63 @@ io.on('connection', (socket) => {
     } catch (e) {
       // Column already exists, ignore error
     }
+    try {
+      await db.exec('ALTER TABLE listings ADD COLUMN userId TEXT');
+      console.log('Added column: userId TEXT');
+    } catch (e) {
+      // Column already exists, ignore error
+    }
 
+    // MIGRATION: Fix listings that have Discord IDs in userId field instead of database IDs
+    console.log('Starting userId migration...');
+    const listingsWithDiscordIds = await db.all(`
+      SELECT l.id as listing_id, l.userId as discord_id, u.id as correct_user_id 
+      FROM listings l 
+      JOIN users u ON l.userId = u.discord_id 
+      WHERE LENGTH(l.userId) > 10 AND l.userId NOT LIKE '%@%'
+    `);
+    
+    if (listingsWithDiscordIds.length > 0) {
+      console.log(`Found ${listingsWithDiscordIds.length} listings with Discord IDs in userId field. Fixing...`);
+      
+      for (const listing of listingsWithDiscordIds) {
+        await db.run(
+          'UPDATE listings SET userId = ? WHERE id = ?',
+          [listing.correct_user_id, listing.listing_id]
+        );
+      }
+      
+      console.log(`Fixed ${listingsWithDiscordIds.length} listings to use proper database IDs`);
+    } else {
+      console.log('No listings found with Discord IDs in userId field');
+    }
+
+    // MIGRATION: Fix listings that have no userId but can be matched by seller name
+    console.log('Starting legacy userId population...');
+    const legacyListings = await db.all(`
+      SELECT l.id as listing_id, l.seller, u.id as user_id
+      FROM listings l
+      JOIN users u ON LOWER(l.seller) = LOWER(u.username)
+      WHERE l.userId IS NULL OR l.userId = ''
+    `);
+    
+    if (legacyListings.length > 0) {
+      console.log(`Found ${legacyListings.length} legacy listings without userId. Populating...`);
+      
+      for (const listing of legacyListings) {
+        await db.run(
+          'UPDATE listings SET userId = ? WHERE id = ?',
+          [listing.user_id, listing.listing_id]
+        );
+      }
+      
+      console.log(`Populated userId for ${legacyListings.length} legacy listings`);
+    } else {
+      console.log('No legacy listings found without userId');
+    }
+    
+    console.log('userId migration completed');
+    
     // Add new columns for combat fields if they do not exist
     const columns = [
       'totalPrice INTEGER',

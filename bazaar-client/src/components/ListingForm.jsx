@@ -49,7 +49,7 @@ function ListingForm({
     if (typeof setCombatCategory === 'function' && (combatCategory === null || combatCategory === undefined)) {
       setCombatCategory("");
     }
-  }, [combatCategory, setCombatCategory]);
+  }, []); // Remove dependencies to prevent infinite loop
   const handleChange = (e) => {
     const { name, value } = e.target;
     // Only allow positive numbers and max 3 digits
@@ -117,7 +117,7 @@ function ListingForm({
       copper: Number(copper) || 0,
       price: totalCopper,
       quantity: Number(quantity) || 1,
-      IGN: IGN,
+      IGN: loggedInUser, // Use current user's display name for API compatibility
       notes: notes || "",
       priceMode: priceDisplayMode,
       combatCategory: combatCategory || "",
@@ -301,28 +301,6 @@ function ListingForm({
         />
       )}
 
-      {/* IGN only */}
-      <div className="mb-4">
-        <label 
-          className="block text-sm font-medium mb-1"
-          style={{ color: darkMode ? '#D4AF37' : '#B8860B' }}
-        >
-          IGN
-        </label>
-        <input
-          type="text"
-          value={IGN}
-          onChange={(e) => {
-            const sanitizedValue = sanitizeInput(e.target.value).substring(0, 16);
-            if (typeof setIGN === 'function') setIGN(sanitizedValue);
-            if (typeof setContactInfo === 'function') setContactInfo(sanitizedValue);
-          }}
-          className="border p-2 rounded dark:bg-gray-800 text-black dark:text-white w-full"
-          placeholder="In Game Name"
-          maxLength="16"
-        />
-      </div>
-
       {/* Notes field */}
       <div className="mb-4">
         <label 
@@ -360,7 +338,7 @@ function ListingForm({
             silver={silver}
             copper={copper}
             quantity={quantity}
-            contactInfo={IGN}
+            contactInfo={loggedInUser}
             notes={notes}
             priceDisplayMode={priceDisplayMode}
             combatCategory={combatCategory}

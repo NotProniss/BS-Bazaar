@@ -159,8 +159,19 @@ function PreviewCard(props) {
   return (
     <div className="mb-6">
       <li
-        className={`border rounded-xl p-4 shadow-sm flex flex-row justify-between items-stretch relative gap-4 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-black'}`}
-        style={{ minHeight: '200px', background: darkMode ? '#1a202c' : undefined, color: darkMode ? '#fff' : undefined }}
+        className="border rounded-xl p-4 shadow-lg flex flex-row justify-between items-stretch relative gap-4 transition-all duration-300"
+        style={{ 
+          minHeight: '200px',
+          background: darkMode 
+            ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%)',
+          color: darkMode ? '#F5E6A3' : '#6B4E3D',
+          border: '1px solid #FFD700',
+          backdropFilter: 'blur(10px)',
+          boxShadow: darkMode 
+            ? '0 8px 32px rgba(212, 175, 55, 0.15)'
+            : '0 8px 32px rgba(184, 134, 11, 0.15)',
+        }}
       >
         <div className="flex flex-row gap-4 flex-1 min-w-0 items-stretch">
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
@@ -246,8 +257,8 @@ function PreviewCard(props) {
             
             {/* Notes - show if notes exist and are not empty */}
             {notes && notes.trim() && (
-              <div className="mt-2 text-sm">
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500">
+              <div className="mt-2 mb-3 text-sm">
+                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4" style={{ borderLeft: '4px solid #FFD700' }}>
                   <div className="font-medium text-gray-900 dark:text-gray-100 mb-1 text-xs">Notes:</div>
                   <div className="text-gray-700 dark:text-gray-300 text-xs break-words">{notes.trim()}</div>
                 </div>

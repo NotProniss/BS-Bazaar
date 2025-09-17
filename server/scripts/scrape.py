@@ -3,6 +3,8 @@ import pandas as pd
 import glob
 import json
 import os
+import sqlite3
+import re
 from urllib.parse import quote
 
 ####### URL's to download the .csv files from and saving the files as parts########
@@ -208,5 +210,142 @@ try:
     print(f"✅ SQLite database created at: {sqlite_db_path}")
 except Exception as e:
     print(f"❌ Error creating SQLite database: {e}")
+
+# Update marketplace database to fix outdated item names
+print("Updating marketplace database with current item names...")
+try:
+    # Connect to marketplace database
+    marketplace_db_path = '/app/data/marketplace.db'
+    if os.path.exists(marketplace_db_path):
+        marketplace_conn = sqlite3.connect(marketplace_db_path)
+        marketplace_cursor = marketplace_conn.cursor()
+        
+        # Fix common item name changes
+        # 1. Remove "Potent " from potion names (e.g., "Potent Potion" -> "Potion")
+        marketplace_cursor.execute('''
+            UPDATE listings 
+            SET item = REPLACE(item, "Potent Potion", "Potion") 
+            WHERE item LIKE "%Potent Potion%"
+        ''')
+        potent_updates = marketplace_cursor.rowcount
+        
+        # 2. Add more item name fixes here as needed
+        # marketplace_cursor.execute('''
+        #     UPDATE listings 
+        #     SET item = REPLACE(item, "old_name", "new_name") 
+        #     WHERE item LIKE "%old_name%"
+        # ''')
+        
+        marketplace_conn.commit()
+        marketplace_conn.close()
+        
+        if potent_updates > 0:
+            print(f"✅ Updated {potent_updates} marketplace listings with old 'Potent' naming")
+        else:
+            print("✅ No marketplace item names needed updating")
+    else:
+        print("ℹ️  Marketplace database not found, skipping item name updates")
+        
+except Exception as e:
+    print(f"⚠️  Error updating marketplace item names: {e}")
+
+# Check for missing item images (logging only)
+print("Checking for new items that may need images...")
+try:
+    # Load current items data
+    with open('/app/data/items.json', 'r', encoding='utf-8') as f:
+        items_data = json.load(f)
+    
+    # Get list of all current item names
+    current_items = set()
+    new_items = []
+    
+    for item in items_data:
+        item_name = item.get('Items', '')
+        if item_name:
+            current_items.add(item_name)
+            # Check for new Infernae items (example of new items to highlight)
+            if 'Infernae' in item_name:
+                new_items.append(item_name)
+    
+    if new_items:
+        print(f"ℹ️  Found {len(new_items)} items with 'Infernae' that may need images:")
+        for item in new_items[:5]:  # Show first 5
+            print(f"   - {item}")
+        if len(new_items) > 5:
+            print(f"   ... and {len(new_items) - 5} more")
+        print("💡 Consider running the image download script separately to get missing images")
+    else:
+        print("✅ No obviously new items detected")
+        
+except Exception as e:
+    print(f"⚠️  Error checking for new items: {e}")
+
+# Auto-download missing images
+try:
+    print(f"[{pd.Timestamp.now()}] Checking for missing images...")
+    
+    def safe_filename(name):
+        """Convert item name to safe filename"""
+        safe = re.sub(r'[^\w\s-]', '', name.strip())
+        safe = re.sub(r'[-\s]+', '_', safe)
+        safe = re.sub(r'^\+', '_', safe)  # Replace leading + with _
+        return safe + '.png'
+    
+    def download_image(item_name, filename):
+        """Download image from wiki"""
+        try:
+            # Use Special:Redirect/file/ format
+            wiki_url = f"https://brightershoreswiki.org/wiki/Special:Redirect/file/{filename}"
+            
+            response = requests.get(wiki_url, timeout=10)
+            if response.status_code == 200:
+                # Use container path for items directory
+                os.makedirs('/usr/share/nginx/html/assets/items', exist_ok=True)
+                filepath = f'/usr/share/nginx/html/assets/items/{filename}'
+                with open(filepath, 'wb') as f:
+                    f.write(response.content)
+                return True
+            return False
+        except Exception:
+            return False
+    
+    # Get all items from database using container path
+    conn = sqlite3.connect('/app/data/items.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT Items FROM items")
+    all_items = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    
+    # Check which images are missing using container path
+    missing_images = []
+    items_dir = '/usr/share/nginx/html/assets/items'
+    
+    for item_name in all_items:
+        filename = safe_filename(item_name)
+        filepath = os.path.join(items_dir, filename)
+        
+        if not os.path.exists(filepath):
+            missing_images.append((item_name, filename))
+    
+    if missing_images:
+        print(f"📥 Downloading {len(missing_images)} missing images...")
+        downloaded = 0
+        
+        for item_name, filename in missing_images:
+            if download_image(item_name, filename):
+                downloaded += 1
+                if downloaded % 10 == 0:
+                    print(f"   Progress: {downloaded}/{len(missing_images)}")
+        
+        print(f"✅ Successfully downloaded {downloaded} new images")
+        
+        if downloaded > 0:
+            print("ℹ️  New images added - nginx will serve them automatically")
+    else:
+        print("✅ All item images are present")
+        
+except Exception as e:
+    print(f"⚠️  Error checking/downloading images: {e}")
 
 print(f"[{pd.Timestamp.now()}] Automated scraping completed successfully!")

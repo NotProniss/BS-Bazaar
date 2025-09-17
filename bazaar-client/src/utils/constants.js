@@ -10,6 +10,7 @@ import alchemistImg from '../assets/Alchemist.png';
 import armorerImg from '../assets/Armorer.png';
 import blacksmithImg from '../assets/Blacksmith.png';
 import bonewrightImg from '../assets/Bonewright.png';
+import botanistImg from '../assets/Botanist.png'; // New profession replacing Gatherer
 import builderImg from '../assets/Builder.png';
 import carpenterImg from '../assets/Carpenter.png';
 import chefImg from '../assets/Chef.png';
@@ -18,7 +19,6 @@ import delverImg from '../assets/Delver.png';
 import detectiveImg from '../assets/Detective.png';
 import fisherImg from '../assets/Fisher.png';
 import foragerImg from '../assets/Forager.png';
-import gathererImg from '../assets/Gatherer.png';
 import guardianImg from '../assets/Guardian.png';
 import hammermageImg from '../assets/Hammermage.png';
 import leatherworkerImg from '../assets/Leatherworker.png';
@@ -70,6 +70,7 @@ export const professionImages = {
   Armorer: armorerImg,
   Blacksmith: blacksmithImg,
   Bonewright: bonewrightImg,
+  Botanist: botanistImg,
   Builder: builderImg,
   Carpenter: carpenterImg,
   Chef: chefImg,
@@ -78,7 +79,6 @@ export const professionImages = {
   Detective: detectiveImg,
   Fisher: fisherImg,
   Forager: foragerImg,
-  Gatherer: gathererImg,
   Guardian: guardianImg,
   Hammermage: hammermageImg,
   Leatherworker: leatherworkerImg,
@@ -88,6 +88,21 @@ export const professionImages = {
   Woodcutter: woodcutterImg,
   Cryoknight: cryoknightImg
 };
+
+// Ensure all profession images are available for webpack bundling
+export const allProfessionImages = [
+  alchemistImg, armorerImg, blacksmithImg, bonewrightImg, botanistImg,
+  builderImg, carpenterImg, chefImg, combatImg, delverImg, detectiveImg,
+  fisherImg, foragerImg, guardianImg, hammermageImg, leatherworkerImg,
+  merchantImg, minerImg, stonemasonImg, woodcutterImg, cryoknightImg
+];
+
+// Force webpack to include all profession images
+// This ensures botanistImg and all other images are bundled
+if (typeof window !== 'undefined') {
+  // Force reference to prevent tree-shaking in production
+  [botanistImg]; // Critical: ensures Botanist.png is included in build
+}
 
 export const episodeImages = {
   Hopeport: hopeportImg,

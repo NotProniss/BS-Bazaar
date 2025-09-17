@@ -106,3 +106,8 @@ ssl/
 # Backup files - but allow items.json.bak as fallback
 *.backup
 marketplace.db.backup-*
+
+# Database backups
+backups/
+*.backup
+*.bak

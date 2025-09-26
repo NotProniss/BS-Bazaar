@@ -223,7 +223,7 @@ passport.use(new LocalStrategy({
       username: user.username,
       email: user.email,
       avatar: user.avatar,
-      auth_type: 'local'
+      auth_type: 'email'
     }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     user.token = token;
@@ -234,12 +234,39 @@ passport.use(new LocalStrategy({
 }));
 
 // Discord Strategy
+console.log('Discord OAuth Config:', {
+  clientID: process.env.DISCORD_CLIENT_ID ? 'present' : 'missing',
+  clientSecret: process.env.DISCORD_CLIENT_SECRET ? 'present' : 'missing', 
+  callbackURL: process.env.DISCORD_CALLBACK_URL
+});
+
 passport.use(new DiscordStrategy({
   clientID: process.env.DISCORD_CLIENT_ID,
   clientSecret: process.env.DISCORD_CLIENT_SECRET,
   callbackURL: process.env.DISCORD_CALLBACK_URL,
   scope: ['identify'],
 }, async (accessToken, refreshToken, profile, done) => {
+  console.log('Discord Strategy called with:', { 
+    accessToken: accessToken ? 'present' : 'missing',
+    profile: profile ? profile.id : 'missing'
+  });
+  
+  if (!accessToken) {
+    console.error('No access token received from Discord');
+    return done(new Error('No access token received'), null);
+  }
+  
+  if (!profile) {
+    console.error('No profile received from Discord');
+    return done(new Error('No profile received'), null);
+  }
+  
+  console.log('Discord profile received:', {
+    id: profile.id,
+    username: profile.username,
+    avatar: profile.avatar
+  });
+  
   try {
     // Check if user already exists with this Discord ID
     let user = await db.get('SELECT * FROM users WHERE discord_id = ?', [profile.id]);
@@ -320,11 +347,36 @@ app.get('/api/info', (req, res) => {
 });
 
 // Authentication Routes
+app.get('/api/auth/discord/test', (req, res) => {
+  res.json({
+    clientID: process.env.DISCORD_CLIENT_ID ? 'configured' : 'missing',
+    callbackURL: process.env.DISCORD_CALLBACK_URL,
+    authURL: `https://discord.com/api/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.DISCORD_CALLBACK_URL)}&response_type=code&scope=identify`
+  });
+});
+
 app.get('/api/auth/discord', passport.authenticate('discord'));
 
 app.get('/api/auth/discord/callback',
-  passport.authenticate('discord', { failureRedirect: '/api/auth/discord/failure' }),
+  (req, res, next) => {
+    console.log('Discord callback received with query:', req.query);
+    console.log('Full URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
+    next();
+  },
+  (req, res, next) => {
+    passport.authenticate('discord', { 
+      failureRedirect: '/api/auth/discord/failure',
+      session: false 
+    })(req, res, (err) => {
+      if (err) {
+        console.error('Discord auth error:', err);
+        return res.redirect('/api/auth/discord/failure');
+      }
+      next();
+    });
+  },
   (req, res) => {
+    console.log('Discord auth successful, user:', req.user ? req.user.id : 'no user');
     const token = req.user.token;
     const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost'}/auth-success?token=${token}`;
     res.redirect(redirectUrl);
@@ -332,7 +384,8 @@ app.get('/api/auth/discord/callback',
 );
 
 app.get('/api/auth/discord/failure', (req, res) => {
-  res.status(401).json({ error: 'Authentication failed' });
+  console.log('Discord authentication failed');
+  res.status(401).json({ error: 'Discord authentication failed. Please check your Discord app configuration.' });
 });
 
 app.get('/api/auth/discord/me', authenticateJWT, (req, res) => {
@@ -399,7 +452,7 @@ app.post('/api/auth/register', async (req, res) => {
       0, // Not verified yet
       Date.now(),
       Date.now(),
-      'local'
+      'email'
     ]);
     
     // Send verification email if transporter is configured
@@ -471,7 +524,7 @@ app.post('/api/auth/login', (req, res, next) => {
         username: user.username,
         email: user.email,
         avatar: user.avatar,
-        auth_type: 'local'
+        auth_type: 'email'
       }
     });
   })(req, res, next);
@@ -1163,6 +1216,95 @@ app.post('/api/listings-old', authenticateJWT, async (req, res) => {
   }
 });
 
+// Get a single listing by ID
+app.get('/api/listings/:id', async (req, res) => {
+  try {
+    const listing = await db.get('SELECT * FROM listings WHERE id = ?', req.params.id);
+    
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+    
+    res.json(listing);
+  } catch (err) {
+    console.error('Error fetching listing:', err);
+    res.status(500).json({ error: 'Failed to fetch listing' });
+  }
+});
+
+// Get profile by user ID
+app.get('/api/profile/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Get user profile
+    const user = await db.get('SELECT username, created_at as createdAt, avatar FROM users WHERE id = ?', userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    // Get user's active listings
+    const listings = await db.all('SELECT * FROM listings WHERE userId = ? ORDER BY timestamp DESC', userId);
+    
+    // Calculate profile statistics
+    const totalListings = listings.length;
+    const activeBuyListings = listings.filter(l => l.type === 'buy').length;
+    const activeSellListings = listings.filter(l => l.type === 'sell').length;
+    const totalValue = listings.reduce((sum, listing) => sum + (listing.price * listing.quantity), 0);
+    
+    // Format join date
+    const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown';
+    
+    const stats = {
+      totalListings,
+      activeBuyListings,
+      activeSellListings,
+      totalValue,
+      joinDate,
+      lastActive: 'Online now' // This could be enhanced with real activity tracking
+    };
+    
+    res.json({
+      profile: user,
+      listings: listings,
+      stats: stats
+    });
+  } catch (err) {
+    console.error('Error fetching profile:', err);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Resolve username to user ID for profile links
+app.get('/api/user/resolve/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+    
+    // First try to find by exact username match
+    let user = await db.get('SELECT id, username FROM users WHERE username = ?', username);
+    
+    if (!user) {
+      // If not found, maybe the "username" is actually a user ID (database ID)
+      user = await db.get('SELECT id, username FROM users WHERE id = ?', username);
+    }
+    
+    if (!user) {
+      // If still not found, maybe it's a Discord ID (for legacy data)
+      user = await db.get('SELECT id, username FROM users WHERE discord_id = ?', username);
+    }
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ userId: user.id, username: user.username });
+  } catch (err) {
+    console.error('Error resolving username:', err);
+    res.status(500).json({ error: 'Failed to resolve username' });
+  }
+});
+
 app.put('/api/listings/:id', authenticateJWT, async (req, res) => {
   const { item, price, quantity, type, category, IGN, priceMode, notes,
     combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent,
@@ -1728,6 +1870,228 @@ app.post('/api/listings', authenticateJWT, async (req, res) => {
   }
 });
 
+// Offers API Endpoints
+
+// Create a new offer on a listing
+app.post('/api/offers', authenticateJWT, async (req, res) => {
+  const { listing_id, offer_amount, message } = req.body;
+
+  // Validation
+  if (!listing_id || !offer_amount) {
+    return res.status(400).json({ 
+      error: 'Missing required fields: listing_id, offer_amount' 
+    });
+  }
+
+  if (offer_amount <= 0) {
+    return res.status(400).json({ 
+      error: 'Offer amount must be a positive number' 
+    });
+  }
+
+  try {
+    // Check if listing exists
+    const listing = await db.get('SELECT * FROM listings WHERE id = ?', listing_id);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    // Check if user is trying to make an offer on their own listing
+    if (listing.userId === req.user.id) {
+      return res.status(400).json({ error: 'Cannot make an offer on your own listing' });
+    }
+
+    // Check if user has already made an offer on this listing
+    const existingOffer = await db.get(
+      'SELECT * FROM offers WHERE listing_id = ? AND user_id = ? AND status = "pending"',
+      listing_id, req.user.id
+    );
+    
+    if (existingOffer) {
+      return res.status(400).json({ error: 'You already have a pending offer on this listing' });
+    }
+
+    // Create the offer
+    const stmt = await db.run(`
+      INSERT INTO offers (listing_id, user_id, username, offer_amount, message, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`,
+      listing_id,
+      req.user.id,
+      req.user.username,
+      offer_amount,
+      message || '',
+      Date.now(),
+      Date.now()
+    );
+
+    const offer = await db.get('SELECT * FROM offers WHERE id = ?', stmt.lastID);
+    
+    // Emit socket event for real-time updates
+    io.emit('offerCreated', { offer, listing });
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Offer created successfully',
+      offer: offer 
+    });
+  } catch (err) {
+    console.error('Error creating offer:', err);
+    res.status(500).json({ error: 'Failed to create offer' });
+  }
+});
+
+// Get all offers for a specific listing
+app.get('/api/offers/listing/:listingId', async (req, res) => {
+  const { listingId } = req.params;
+
+  try {
+    const offers = await db.all(`
+      SELECT o.*, u.avatar as user_avatar
+      FROM offers o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.listing_id = ?
+      ORDER BY o.created_at DESC`,
+      listingId
+    );
+
+    res.json(offers);
+  } catch (err) {
+    console.error('Error fetching offers:', err);
+    res.status(500).json({ error: 'Failed to fetch offers' });
+  }
+});
+
+// Get all offers made by the authenticated user
+app.get('/api/offers/user', authenticateJWT, async (req, res) => {
+  try {
+    const offers = await db.all(`
+      SELECT o.*, l.item, l.seller, l.price as listing_price, l.type as listing_type
+      FROM offers o
+      LEFT JOIN listings l ON o.listing_id = l.id
+      WHERE o.user_id = ?
+      ORDER BY o.created_at DESC`,
+      req.user.id
+    );
+
+    res.json(offers);
+  } catch (err) {
+    console.error('Error fetching user offers:', err);
+    res.status(500).json({ error: 'Failed to fetch offers' });
+  }
+});
+
+// Get all offers on listings owned by the authenticated user
+app.get('/api/offers/received', authenticateJWT, async (req, res) => {
+  try {
+    const offers = await db.all(`
+      SELECT o.*, l.item, l.seller, l.price as listing_price, l.type as listing_type, u.avatar as user_avatar
+      FROM offers o
+      LEFT JOIN listings l ON o.listing_id = l.id
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE l.userId = ?
+      ORDER BY o.created_at DESC`,
+      req.user.id
+    );
+
+    res.json(offers);
+  } catch (err) {
+    console.error('Error fetching received offers:', err);
+    res.status(500).json({ error: 'Failed to fetch received offers' });
+  }
+});
+
+// Accept or reject an offer
+app.put('/api/offers/:offerId', authenticateJWT, async (req, res) => {
+  const { offerId } = req.params;
+  const { action } = req.body; // 'accept' or 'reject'
+
+  if (!['accept', 'reject'].includes(action)) {
+    return res.status(400).json({ error: 'Action must be either "accept" or "reject"' });
+  }
+
+  try {
+    // Get the offer and associated listing
+    const offer = await db.get(`
+      SELECT o.*, l.userId as listing_owner_id, l.item, l.seller
+      FROM offers o
+      LEFT JOIN listings l ON o.listing_id = l.id
+      WHERE o.id = ?`,
+      offerId
+    );
+
+    if (!offer) {
+      return res.status(404).json({ error: 'Offer not found' });
+    }
+
+    // Check if the authenticated user owns the listing
+    if (String(offer.listing_owner_id) !== String(req.user.id)) {
+      return res.status(403).json({ error: 'You can only accept/reject offers on your own listings' });
+    }
+
+    // Check if offer is still pending
+    if (offer.status !== 'pending') {
+      return res.status(400).json({ error: 'This offer has already been processed' });
+    }
+
+    // Update the offer status
+    const newStatus = action === 'accept' ? 'accepted' : 'rejected';
+    await db.run(
+      'UPDATE offers SET status = ?, updated_at = ? WHERE id = ?',
+      newStatus, Date.now(), offerId
+    );
+
+    const updatedOffer = await db.get('SELECT * FROM offers WHERE id = ?', offerId);
+
+    // Emit socket event for real-time updates
+    io.emit('offerUpdated', { offer: updatedOffer, action });
+
+    res.json({ 
+      success: true, 
+      message: `Offer ${action}ed successfully`,
+      offer: updatedOffer 
+    });
+  } catch (err) {
+    console.error('Error updating offer:', err);
+    res.status(500).json({ error: 'Failed to update offer' });
+  }
+});
+
+// Delete an offer (only by the offer creator)
+app.delete('/api/offers/:offerId', authenticateJWT, async (req, res) => {
+  const { offerId } = req.params;
+
+  try {
+    const offer = await db.get('SELECT * FROM offers WHERE id = ?', offerId);
+    
+    if (!offer) {
+      return res.status(404).json({ error: 'Offer not found' });
+    }
+
+    // Check if the authenticated user created the offer
+    if (offer.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete your own offers' });
+    }
+
+    // Only allow deletion of pending offers
+    if (offer.status !== 'pending') {
+      return res.status(400).json({ error: 'Can only delete pending offers' });
+    }
+
+    await db.run('DELETE FROM offers WHERE id = ?', offerId);
+
+    // Emit socket event for real-time updates
+    io.emit('offerDeleted', { offerId });
+
+    res.json({ 
+      success: true, 
+      message: 'Offer deleted successfully' 
+    });
+  } catch (err) {
+    console.error('Error deleting offer:', err);
+    res.status(500).json({ error: 'Failed to delete offer' });
+  }
+});
+
 // Socket.IO Setup
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -1818,9 +2182,26 @@ io.on('connection', (socket) => {
         email_verification_token TEXT,
         password_reset_token TEXT,
         password_reset_expires INTEGER,
-        auth_type TEXT DEFAULT 'local',
+        auth_type TEXT DEFAULT 'email',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
+      );
+    `);
+
+    // Create offers table for marketplace offers
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        listing_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        offer_amount INTEGER NOT NULL,
+        message TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `);
 
@@ -1829,9 +2210,12 @@ io.on('connection', (socket) => {
       await db.exec('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
       await db.exec('CREATE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id)');
       await db.exec('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)');
-      console.log('Created user indexes');
+      await db.exec('CREATE INDEX IF NOT EXISTS idx_offers_listing ON offers(listing_id)');
+      await db.exec('CREATE INDEX IF NOT EXISTS idx_offers_user ON offers(user_id)');
+      await db.exec('CREATE INDEX IF NOT EXISTS idx_offers_status ON offers(status)');
+      console.log('Created user and offer indexes');
     } catch (e) {
-      console.log('User indexes may already exist:', e.message);
+      console.log('Indexes may already exist:', e.message);
     }
 
     // Add migration logic for users table columns (for production database compatibility)
@@ -1844,7 +2228,7 @@ io.on('connection', (socket) => {
       'email_verification_token TEXT',
       'password_reset_token TEXT',
       'password_reset_expires INTEGER',
-      'auth_type TEXT DEFAULT \'local\'',
+      'auth_type TEXT DEFAULT \'email\'',
       'created_at INTEGER',
       'updated_at INTEGER'
     ];
@@ -1926,6 +2310,102 @@ io.on('connection', (socket) => {
     }
     
     console.log('userId migration completed');
+    
+    // MIGRATION: Create user accounts for orphaned listings and fix their userIds
+    console.log('Starting legacy user account creation...');
+    
+    // First, get all distinct legacy users from listings that have NULL userId but seller names
+    const legacyUsers = await db.all(`
+      SELECT DISTINCT seller 
+      FROM listings 
+      WHERE userId IS NULL AND seller IS NOT NULL AND seller != ''
+    `);
+    
+    if (legacyUsers.length > 0) {
+      console.log(`Found ${legacyUsers.length} legacy users to create accounts for...`);
+      
+      for (const legacyUser of legacyUsers) {
+        const username = legacyUser.seller;
+        
+        // Check if user already exists (shouldn't happen, but be safe)
+        const existingUser = await db.get('SELECT id FROM users WHERE username = ?', [username]);
+        
+        if (!existingUser) {
+          // Create new user account for this legacy user
+          const result = await db.run(`
+            INSERT INTO users (
+              username, discord_id, discord_username, email_verified, 
+              created_at, updated_at, auth_type
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          `, [
+            username,
+            null, // We'll try to find the Discord ID from logs later
+            null,
+            1, // Mark as "verified" since they had listings
+            Date.now() - (365 * 24 * 60 * 60 * 1000), // Set created date to 1 year ago
+            Date.now(),
+            'discord'
+          ]);
+          
+          const newUserId = result.lastID;
+          console.log(`Created user account: ID ${newUserId} for username "${username}"`);
+          
+          // Update all listings by this seller to use the new user ID
+          const updateResult = await db.run(
+            'UPDATE listings SET userId = ? WHERE seller = ? AND userId IS NULL',
+            [newUserId, username]
+          );
+          
+          console.log(`Updated ${updateResult.changes} listings for user "${username}" to use ID ${newUserId}`);
+        }
+      }
+      
+      console.log('Legacy user account creation completed');
+    } else {
+      console.log('No legacy users found to create accounts for');
+    }
+    
+    // MIGRATION: Try to recover Discord IDs from server logs (this won't work in production but helps development)
+    console.log('Attempting to recover Discord IDs for legacy users...');
+    // This is just for development - in production these Discord IDs would need to be manually added
+    const discordIdMappings = {
+      'vorpal': '95186573116583936',
+      'strauji': '317773046784196612',
+      'retrocontendo': '283837700396548106',
+      'jake02730': '80912162008076288',
+      'charmingbree': '693208532341882913',
+      'yotriggy': '367463621221023754',
+      'griz1693': '228412411558756352',
+      'rexh8719': '785113341551050762',
+      'jarheadd1': '176084663020945408',
+      'sn5e1': '385533363567460352',
+      'ojallen': '429684374674472960',
+      'bslam': '140225798333399040',
+      'yakegrenthis': '295929198655045632',
+      'mredgar_42046': '1350465613054607410',
+      'noobscasino': '288886620130770944',
+      '2tapp_': '202520060772745217',
+      'xi__': '184021413584175104',
+      'stinkypete1972': '430386124326830081',
+      'poggers_06722': '1400137319121420348'
+    };
+    
+    let recoveredCount = 0;
+    for (const [username, discordId] of Object.entries(discordIdMappings)) {
+      const user = await db.get('SELECT id FROM users WHERE username = ?', [username]);
+      if (user) {
+        await db.run(
+          'UPDATE users SET discord_id = ?, discord_username = ? WHERE id = ?',
+          [discordId, username, user.id]
+        );
+        console.log(`Recovered Discord ID ${discordId} for user "${username}"`);
+        recoveredCount++;
+      }
+    }
+    
+    if (recoveredCount > 0) {
+      console.log(`Recovered Discord IDs for ${recoveredCount} legacy users`);
+    }
     
     // Add new columns for combat fields if they do not exist
     const columns = [

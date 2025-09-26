@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import config from '../config';
 import { professionImages, dmgTypeImages, currencyImages, episodeImages } from '../utils/constants';
 import { calculateTotalCopper, formatTimeAgo } from '../utils/helpers';
+import UserLink from './UserLink';
 
 function ItemCard(props) {
   const {
@@ -32,8 +34,13 @@ function ItemCard(props) {
     onEdit,
     onDelete,
     isListing = false,
-    timestamp
+    timestamp,
+    seller,
+    sellerAvatar,
+    userId
   } = props;
+
+  const navigate = useNavigate();
 
   // Fetch item data from backend API
   const [itemData, setItemData] = useState([]);
@@ -148,9 +155,13 @@ function ItemCard(props) {
       {/* Discord username - always show */}
       
       {/* Display seller name for listings, current user for previews */}
-      <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap" title={isListing ? (listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}>
-        {isListing ? (listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
-      </div>
+      <UserLink 
+        username={isListing ? (seller || listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
+        userId={isListing ? userId : undefined}
+        className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap"
+        title={isListing ? (seller || listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
+        darkMode={darkMode}
+      />
     </div>
   );
 
@@ -376,10 +387,10 @@ function ItemCard(props) {
                       onClick={onEdit}
                       className="w-8 h-8 flex items-center justify-center rounded transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2"
                       style={{
-                        color: '#3B82F6',
-                        background: darkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        focusRingColor: '#3B82F6'
+                        color: '#B8860B',
+                        background: darkMode ? 'rgba(184, 134, 11, 0.1)' : 'rgba(184, 134, 11, 0.05)',
+                        border: '1px solid rgba(184, 134, 11, 0.3)',
+                        focusRingColor: '#B8860B'
                       }}
                       aria-label="Edit listing"
                     >
@@ -404,6 +415,30 @@ function ItemCard(props) {
                     </button>
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                       Delete
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* View Details button - always visible for listings */}
+              {isListing && listing?.id && (
+                <div className="mb-2">
+                  <div className="relative group">
+                    <button
+                      onClick={() => navigate(`/listing/${listing.id}`)}
+                      className="w-8 h-8 flex items-center justify-center rounded transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2"
+                      style={{
+                        color: '#B8860B',
+                        background: darkMode ? 'rgba(184, 134, 11, 0.1)' : 'rgba(184, 134, 11, 0.05)',
+                        border: '1px solid rgba(184, 134, 11, 0.3)',
+                        focusRingColor: '#B8860B'
+                      }}
+                      aria-label="View listing details"
+                    >
+                      👁
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                      View Details
                     </div>
                   </div>
                 </div>

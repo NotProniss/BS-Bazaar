@@ -1,8 +1,6 @@
 import React from 'react';
 
-function Footer() {
-  const darkMode = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
+function Footer({ darkMode }) {
   return (
     <footer 
       className="w-full text-center fixed bottom-0 left-0 z-30 border-t p-1"

@@ -101,6 +101,7 @@ export const allProfessionImages = [
 // This ensures botanistImg and all other images are bundled
 if (typeof window !== 'undefined') {
   // Force reference to prevent tree-shaking in production
+  // eslint-disable-next-line no-unused-expressions
   [botanistImg]; // Critical: ensures Botanist.png is included in build
 }
 

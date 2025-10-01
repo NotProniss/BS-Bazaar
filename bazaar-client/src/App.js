@@ -10,6 +10,8 @@ import Footer from './components/Footer';
 import AdminDashboard from './AdminDashboard';
 import Register from './pages/Register';
 import ListingsPage from './pages/alllistings';
+import ListingDetail from './pages/ListingDetail';
+import ProfileDetail from './pages/ProfileDetail';
 import PostPage from './pages/postlistings';
 import MyProfile from './pages/myprofile';
 import TestPage from './pages/test';
@@ -18,6 +20,7 @@ import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import { jwtDecode } from 'jwt-decode';
 import GettingStarted from './pages/gettingstarted';
+import { getValidToken } from './utils/helpers';
 
 // PostHog pageview tracking component
 function PostHogPageView() {
@@ -46,6 +49,12 @@ function AppContent() {
       return {
         title: 'Post a Listing | BS Bazaar',
         description: 'Post your own listing to the BS Bazaar marketplace and reach other Brighter Shores players.'
+      };
+    }
+    if (location.pathname.startsWith('/listing/')) {
+      return {
+        title: 'Listing Details | BS Bazaar',
+        description: 'View detailed information about this marketplace listing on BS Bazaar - Brighter Shores Marketplace'
       };
     }
     if (location.pathname.startsWith('/myprofile')) {
@@ -128,7 +137,7 @@ function AppContent() {
   useEffect(() => {
     fetchListings();
 
-    const token = localStorage.getItem('jwtToken');
+    const token = getValidToken();
     if (token) {
       try {
         const payload = jwtDecode(token);
@@ -145,11 +154,20 @@ function AppContent() {
           })
           .catch(err => {
             console.error('Failed to check admin status:', err);
-            setIsAdmin(false);
+            if (err.response?.status === 401) {
+              // Invalid token, clear it
+              localStorage.removeItem('jwtToken');
+              localStorage.removeItem('token');
+              setLoggedInUser(null);
+              setIsAdmin(false);
+            } else {
+              setIsAdmin(false);
+            }
           });
       } catch (err) {
         console.warn('Invalid token in localStorage');
         localStorage.removeItem('jwtToken');
+        localStorage.removeItem('token');
         setLoggedInUser(null);
         setIsAdmin(false);
       }
@@ -196,9 +214,9 @@ function AppContent() {
     console.log('[DEBUG] addOrEditListing called with:', listing);
     console.log('[DEBUG] editingId:', editingId);
     
-    const token = localStorage.getItem('jwtToken');
+    const token = getValidToken();
     if (!token) {
-      showToast('You must be logged in!', 'error');
+      showToast('Please log in again to continue', 'error');
       return;
     }
 
@@ -217,6 +235,14 @@ function AppContent() {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (userRes.status === 401) {
+        showToast('Your session has expired. Please log in again.', 'error');
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('token');
+        setLoggedInUser(null);
+        return;
+      }
       
       if (userRes.ok) {
         const userData = await userRes.json();
@@ -258,18 +284,27 @@ function AppContent() {
   };
 
   const deleteListing = async (id) => {
-    const token = localStorage.getItem('jwtToken');
+    const token = getValidToken();
     if (!token) {
-      showToast('You must be logged in!', 'error');
+      showToast('Please log in again to delete listings', 'error');
       return;
     }
 
     try {
-      await axios.delete(`${BACKEND_URL}/listings/${id}`, {
+      const response = await axios.delete(`${BACKEND_URL}/listings/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.status === 401) {
+        showToast('Your session has expired. Please log in again.', 'error');
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('token');
+        setLoggedInUser(null);
+        return;
+      }
+
       fetchListings();
       showToast('Listing deleted!', 'success');
     } catch (err) {
@@ -493,6 +528,22 @@ function AppContent() {
                   />
                 } />
                 <Route path="/listings" element={<Navigate to="/alllistings" replace />} />
+                <Route path="/listing/:id" element={
+                  <ListingDetail
+                    loggedInUser={loggedInUser}
+                    startEditing={startEditing}
+                    deleteListing={deleteListing}
+                    darkMode={darkMode}
+                  />
+                } />
+                <Route path="/profile/:userId" element={
+                  <ProfileDetail
+                    loggedInUser={loggedInUser}
+                    startEditing={startEditing}
+                    deleteListing={deleteListing}
+                    darkMode={darkMode}
+                  />
+                } />
                 <Route path="/post" element={
                   loggedInUser ? (
                     <PostPage
@@ -585,7 +636,7 @@ function AppContent() {
               </Routes>
             </div>
           </div>
-          <Footer />
+          <Footer darkMode={darkMode} />
         </main>
         
         {/* Login Popup - rendered at app level */}

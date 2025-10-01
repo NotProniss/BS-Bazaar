@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import ItemCard from '../components/ItemCard';
 import { joinApiUrl } from '../config';
+import { getValidToken } from '../utils/helpers';
 
 const MyProfilePage = ({
   listings = [],
@@ -17,6 +19,8 @@ const MyProfilePage = ({
   deleteListing = () => {},
   darkMode = false
 }) => {
+  const navigate = useNavigate();
+  
   // Local sortOrder state to always default to 'new'
   const [sortOrder, setSortOrder] = React.useState('new');
   // Episode and profession filter state
@@ -48,7 +52,7 @@ const MyProfilePage = ({
   React.useEffect(() => {
     async function fetchUserData() {
       try {
-        const token = localStorage.getItem('jwtToken');
+        const token = getValidToken();
         if (!token) return;
         
         const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
@@ -57,6 +61,13 @@ const MyProfilePage = ({
             'Authorization': `Bearer ${token}`
           }
         });
+        
+        if (res.status === 401) {
+          // Token is invalid, clear it
+          localStorage.removeItem('jwtToken');
+          localStorage.removeItem('token');
+          return;
+        }
         
         if (res.ok) {
           const userData = await res.json();
@@ -136,11 +147,11 @@ const MyProfilePage = ({
     activeBuyListings: userListings.filter(l => l.type === 'buy').length,
     activeSellListings: userListings.filter(l => l.type === 'sell').length,
     totalValue: userListings.reduce((sum, listing) => sum + (listing.price * listing.quantity), 0),
-    joinDate: 'November 2024', // This would come from user data in a real app
+    joinDate: currentUser?.createdAt ? new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown',
     lastActive: 'Online now'
   };
 
-  // Format currency for display
+  // Format currency for display with icons
   const formatCurrency = (totalCopper) => {
     const platinum = Math.floor(totalCopper / 1000000000);
     const gold = Math.floor((totalCopper % 1000000000) / 1000000);
@@ -148,12 +159,44 @@ const MyProfilePage = ({
     const copper = totalCopper % 1000;
     
     const parts = [];
-    if (platinum > 0) parts.push(`${platinum}p`);
-    if (gold > 0) parts.push(`${gold}g`);
-    if (silver > 0) parts.push(`${silver}s`);
-    if (copper > 0 || parts.length === 0) parts.push(`${copper}c`);
+    if (platinum > 0) {
+      parts.push(
+        <span key="platinum" className="inline-flex items-center gap-1">
+          {platinum}
+          <img src="/assets/Platinum.png" alt="Platinum" className="w-4 h-4" />
+        </span>
+      );
+    }
+    if (gold > 0) {
+      parts.push(
+        <span key="gold" className="inline-flex items-center gap-1">
+          {gold}
+          <img src="/assets/Gold.png" alt="Gold" className="w-4 h-4" />
+        </span>
+      );
+    }
+    if (silver > 0) {
+      parts.push(
+        <span key="silver" className="inline-flex items-center gap-1">
+          {silver}
+          <img src="/assets/Silver.png" alt="Silver" className="w-4 h-4" />
+        </span>
+      );
+    }
+    if (copper > 0 || parts.length === 0) {
+      parts.push(
+        <span key="copper" className="inline-flex items-center gap-1">
+          {copper}
+          <img src="/assets/Copper.png" alt="Copper" className="w-4 h-4" />
+        </span>
+      );
+    }
     
-    return parts.join(' ');
+    return (
+      <div className="inline-flex flex-wrap items-center gap-2">
+        {parts}
+      </div>
+    );
   };
 
   // Helper functions for dropdown images
@@ -316,6 +359,17 @@ const MyProfilePage = ({
                     Sell Orders
                   </div>
                 </div>
+              </div>
+              
+              {/* View Public Profile Button */}
+              <div className="mt-4 flex justify-center md:justify-start">
+                <button
+                  onClick={() => navigate(`/profile/${currentUser?.id}`)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                  disabled={!currentUser?.id}
+                >
+                  👁 View Public Profile
+                </button>
               </div>
             </div>
           </div>

@@ -1,6 +1,40 @@
 import React from 'react';
 import { currencyImages } from './constants';
 
+// Token validation and cleanup utilities
+export function isValidJWTFormat(token) {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every(part => part.length > 0);
+}
+
+export function clearInvalidToken() {
+  // Check both token keys for backwards compatibility
+  const token = localStorage.getItem('jwtToken') || localStorage.getItem('token');
+  if (token && !isValidJWTFormat(token)) {
+    console.warn('Invalid JWT format detected, clearing token');
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('token');
+    return true;
+  }
+  return false;
+}
+
+export function getValidToken() {
+  // Check both token keys for backwards compatibility  
+  const token = localStorage.getItem('jwtToken') || localStorage.getItem('token');
+  if (!token) return null;
+  
+  if (!isValidJWTFormat(token)) {
+    console.warn('Invalid JWT format detected, clearing token');
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('token');
+    return null;
+  }
+  
+  return token;
+}
+
 // Helper to format time ago as HH:MM Ago, supports ms timestamps
 export function formatTimeAgo(dateInput) {
   if (!dateInput) return '';
@@ -68,6 +102,44 @@ export function formatPrice(totalCopper) {
   return <>{parts}</>
 }
 
+export function formatPriceMedium(totalCopper) {
+  // 1 platinum = 1,000,000,000 copper
+  // 1 gold = 1,000,000 copper
+  // 1 silver = 1,000 copper
+  // 1 copper = 1 copper
+  const platinum = Math.floor(totalCopper / 1000000000)
+  const gold = Math.floor((totalCopper % 1000000000) / 1000000)
+  const silver = Math.floor((totalCopper % 1000000) / 1000)
+  const copper = totalCopper % 1000
+
+  const parts = []
+  if (platinum) parts.push(
+    <span key="Platinum" style={{display: 'inline-flex', alignItems: 'center', fontSize: '1rem', fontWeight: 600, lineHeight: 1}}>
+      {platinum}
+      <img src={currencyImages.platinum || "/placeholder.svg"} alt="Platinum" title="Platinum" style={{height: '1.25em', width: '1.25em', marginLeft: '0.25em', objectFit: 'contain', flexShrink: 0}} />
+    </span>
+  )
+  if (gold) parts.push(
+    <span key="Gold" style={{display: 'inline-flex', alignItems: 'center', fontSize: '1rem', fontWeight: 600, lineHeight: 1}}>
+      {gold}
+      <img src={currencyImages.gold || "/placeholder.svg"} alt="Gold" title="Gold" style={{height: '1.25em', width: '1.25em', marginLeft: '0.25em', objectFit: 'contain', flexShrink: 0}} />
+    </span>
+  )
+  if (silver) parts.push(
+    <span key="Silver" style={{display: 'inline-flex', alignItems: 'center', fontSize: '1rem', fontWeight: 600, lineHeight: 1}}>
+      {silver}
+      <img src={currencyImages.silver || "/placeholder.svg"} alt="Silver" title="Silver" style={{height: '1.25em', width: '1.25em', marginLeft: '0.25em', objectFit: 'contain', flexShrink: 0}} />
+    </span>
+  )
+  if (copper || parts.length === 0) parts.push(
+    <span key="Copper" style={{display: 'inline-flex', alignItems: 'center', fontSize: '1rem', fontWeight: 600, lineHeight: 1}}>
+      {copper}
+      <img src={currencyImages.copper || "/placeholder.svg"} alt="Copper" title="Copper" style={{height: '1.25em', width: '1.25em', marginLeft: '0.25em', objectFit: 'contain', flexShrink: 0}} />
+    </span>
+  )
+  return <>{parts}</>
+}
+
 export function calculateTotalCopper(platinum, gold, silver, copper) {
   return (
     Number.parseInt(platinum || 0) * 1000000000 +
@@ -75,4 +147,13 @@ export function calculateTotalCopper(platinum, gold, silver, copper) {
     Number.parseInt(silver || 0) * 1000 +
     Number.parseInt(copper || 0)
   );
+}
+
+export function convertCopperToCurrency(totalCopper) {
+  const platinum = Math.floor(totalCopper / 1000000000);
+  const gold = Math.floor((totalCopper % 1000000000) / 1000000);
+  const silver = Math.floor((totalCopper % 1000000) / 1000);
+  const copper = totalCopper % 1000;
+  
+  return { platinum, gold, silver, copper };
 }

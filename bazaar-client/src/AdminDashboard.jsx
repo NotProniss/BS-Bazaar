@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
+import { getValidToken } from './utils/helpers';
+import UserLink from './components/UserLink';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
 
@@ -11,7 +13,11 @@ function AdminDashboard({ onRefreshListings, darkMode }) {
   const [hasError, setHasError] = useState(false);
 
   const authConfig = () => {
-    const token = localStorage.getItem('jwtToken');
+    const token = getValidToken();
+    if (!token) {
+      setHasError(true);
+      return null;
+    }
     return {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -29,13 +35,23 @@ function AdminDashboard({ onRefreshListings, darkMode }) {
   };
 
   const fetchAdmins = useCallback(() => {
-    axios.get(`${BACKEND_URL}/admin/users`, authConfig())
+    const config = authConfig();
+    if (!config) {
+      setHasError(true);
+      return;
+    }
+
+    axios.get(`${BACKEND_URL}/admin/users`, config)
       .then(res => {
         setAdmins(res.data.admins);
         setIsAdmin(true);
       })
       .catch(err => {
-        if (err.response?.status === 403) {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('jwtToken');
+          localStorage.removeItem('token');
+          setHasError(true);
+        } else if (err.response?.status === 403) {
           console.log('User is not an admin');
           setIsAdmin(false); // hide dashboard
         } else {
@@ -236,7 +252,14 @@ function AdminDashboard({ onRefreshListings, darkMode }) {
               >
                 ✕
               </button>
-              <span>{listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by {listing.seller}</span>
+              <span>
+                {listing.item} — {listing.quantity} @ {listing.price} ({listing.type}) by{' '}
+                <UserLink 
+                  username={listing.seller}
+                  userId={listing.userId}
+                  darkMode={darkMode}
+                />
+              </span>
             </li>
           ))}
         </ul>

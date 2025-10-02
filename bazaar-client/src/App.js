@@ -624,6 +624,14 @@ function AppContent() {
                 } />
                 {/* Legacy route redirect */}
                 <Route path="/mylistings" element={<Navigate to="/myprofile" replace />} />
+                <Route path="/listing/:id" element={
+                  <ListingDetail 
+                    loggedInUser={loggedInUser}
+                    startEditing={startEditing}
+                    deleteListing={deleteListing}
+                    darkMode={darkMode}
+                  />
+                } />
                 <Route path="/adminpanel" element={<AdminDashboard onRefreshListings={fetchListings} darkMode={darkMode} />} />
                 <Route path="/register" element={
                   <Register 

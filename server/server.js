@@ -1177,9 +1177,9 @@ app.post('/api/listings-old', authenticateJWT, async (req, res) => {
   const totalPrice = price * quantity;
   try {
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerAvatar, timestamp, IGN, priceMode, notes,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerId, sellerAvatar, timestamp, IGN, priceMode, notes,
         combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
       price,
       quantity,
@@ -1188,6 +1188,7 @@ app.post('/api/listings-old', authenticateJWT, async (req, res) => {
       category,
       req.user.username, // seller - current username
       req.user.id, // userId - permanent ID
+      req.user.id, // sellerId - same as userId for consistency
       req.user.avatar,
       Date.now(),
       req.user.username, // IGN - current username (for Discord bot compatibility)
@@ -1827,9 +1828,9 @@ app.post('/api/listings', authenticateJWT, async (req, res) => {
   try {
     const totalPrice = price * quantity;
     const stmt = await db.run(`
-      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerAvatar, timestamp, IGN, contactInfo, priceMode, notes,
+      INSERT INTO listings (item, price, quantity, totalPrice, type, category, seller, userId, sellerId, sellerAvatar, timestamp, IGN, contactInfo, priceMode, notes,
         combatCategory, combatLevel, combatStrength, combatDmgType, combatDmgPercent, combatImpact, combatCryonae, combatArborae, combatTempestae, combatInfernae, combatNecromae, rarity)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       item,
       price,
       quantity,
@@ -1837,6 +1838,8 @@ app.post('/api/listings', authenticateJWT, async (req, res) => {
       type.toLowerCase(),
       category || '',
       req.user.username, // seller - use current username
+      req.user.id, // userId - permanent ID
+      req.user.id, // sellerId - same as userId for consistency
       req.user.id, // userId - use authenticated user's permanent ID  
       req.user.avatar || '', // sellerAvatar - use authenticated user's avatar
       Date.now(),

@@ -127,7 +127,6 @@ function AppContent() {
   const fetchListings = React.useCallback(async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/listings`);
-      console.log('Fetched listings:', res.data);
       setListings(res.data);
     } catch (err) {
       console.error('Error fetching listings:', err);
@@ -279,7 +278,22 @@ function AppContent() {
     } catch (err) {
       console.error('[DEBUG] Error saving listing:', err);
       console.error('[DEBUG] Error response:', err.response?.data);
-      showToast('Failed to save listing', 'error');
+      console.error('[DEBUG] Error status:', err.response?.status);
+      console.error('[DEBUG] Full error:', err);
+      
+      // Check if it's an authentication error
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Your session has expired. Please log in again.', 'error');
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('token');
+        setLoggedInUser(null);
+        setIsAdmin(false);
+      } else if (err.response?.status === 500) {
+        const errorMsg = err.response?.data?.details || err.response?.data?.error || 'Failed to save listing';
+        showToast(errorMsg, 'error');
+      } else {
+        showToast('Failed to save listing', 'error');
+      }
     }
   };
 

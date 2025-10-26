@@ -152,6 +152,10 @@ function authenticateJWT(req, res, next) {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       console.log('[AUTH] Token verification failed:', err.message);
+      // Return 401 for expired tokens, 403 for other invalid tokens
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Token expired' });
+      }
       return res.status(403).json({ error: 'Invalid token' });
     }
     console.log('[AUTH] Token verified successfully. User ID:', user.id, 'Type:', typeof user.id);
@@ -162,8 +166,8 @@ function authenticateJWT(req, res, next) {
 
 async function ensureAdmin(req, res, next) {
   try {
-    const row = await db.get('SELECT 1 FROM admins WHERE id = ?', req.user?.id);
-    if (row) {
+    const row = await db.get('SELECT user_flags FROM users WHERE id = ?', req.user?.id);
+    if (row && row.user_flags && row.user_flags.includes('Admin')) {
       return next();
     }
     return res.status(403).json({ error: 'Admin access required' });
@@ -1148,8 +1152,9 @@ app.post('/logout', (req, res) => {
 // Check if user is admin
 app.get('/api/is-admin', authenticateJWT, async (req, res) => {
   try {
-    const row = await db.get('SELECT 1 FROM admins WHERE id = ?', req.user?.id);
-    res.json({ isAdmin: !!row });
+    const row = await db.get('SELECT user_flags FROM users WHERE id = ?', req.user?.id);
+    const isAdmin = row && row.user_flags && row.user_flags.includes('Admin');
+    res.json({ isAdmin: !!isAdmin });
   } catch (error) {
     console.error('Error checking admin status:', error);
     res.status(500).json({ error: 'Failed to check admin status' });
@@ -1159,7 +1164,13 @@ app.get('/api/is-admin', authenticateJWT, async (req, res) => {
 // Listing Routes
 app.get('/listings', async (req, res) => {
   try {
-    const listings = await db.all('SELECT * FROM listings WHERE item IS NOT NULL AND item != "" ORDER BY timestamp DESC');
+    const listings = await db.all(`
+      SELECT l.*, u.user_flags 
+      FROM listings l
+      LEFT JOIN users u ON l.userId = u.id
+      WHERE l.item IS NOT NULL AND l.item != "" 
+      ORDER BY l.timestamp DESC
+    `);
     // DEBUG: Log all listings before sending to frontend
     console.log('[API DEBUG] Listings returned:', listings);
     res.json(listings);
@@ -1239,7 +1250,7 @@ app.get('/api/profile/:userId', async (req, res) => {
     const userId = req.params.userId;
     
     // Get user profile
-    const user = await db.get('SELECT username, created_at as createdAt, avatar FROM users WHERE id = ?', userId);
+    const user = await db.get('SELECT username, created_at as createdAt, avatar, user_flags FROM users WHERE id = ?', userId);
     
     if (!user) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -1283,16 +1294,16 @@ app.get('/api/user/resolve/:username', async (req, res) => {
     const username = req.params.username;
     
     // First try to find by exact username match
-    let user = await db.get('SELECT id, username FROM users WHERE username = ?', username);
+    let user = await db.get('SELECT id, username, user_flags FROM users WHERE username = ?', username);
     
     if (!user) {
       // If not found, maybe the "username" is actually a user ID (database ID)
-      user = await db.get('SELECT id, username FROM users WHERE id = ?', username);
+      user = await db.get('SELECT id, username, user_flags FROM users WHERE id = ?', username);
     }
     
     if (!user) {
       // If still not found, maybe it's a Discord ID (for legacy data)
-      user = await db.get('SELECT id, username FROM users WHERE discord_id = ?', username);
+      user = await db.get('SELECT id, username, user_flags FROM users WHERE discord_id = ?', username);
     }
     
     if (!user) {
@@ -1375,21 +1386,48 @@ app.delete('/admin/listings/:id', authenticateJWT, ensureAdmin, async (req, res)
   }
 });
 
-app.get('/admin/users', authenticateJWT, ensureAdmin, async (req, res) => {
-  const admins = await db.all('SELECT * FROM admins');
-  res.json({ admins });
+
+// User flags management endpoints
+app.post('/admin/users/flags/set', authenticateJWT, ensureAdmin, async (req, res) => {
+  try {
+    const { userId, flags } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    // Validate flags format - should be comma-separated string or null
+    const validFlags = ['Admin', 'VIP', 'MVP'];
+    if (flags) {
+      const flagArray = flags.split(',').map(f => f.trim());
+      const invalidFlags = flagArray.filter(f => !validFlags.includes(f));
+      if (invalidFlags.length > 0) {
+        return res.status(400).json({ error: `Invalid flags: ${invalidFlags.join(', ')}. Valid flags: ${validFlags.join(', ')}` });
+      }
+    }
+    
+    await db.run('UPDATE users SET user_flags = ? WHERE id = ?', flags || null, userId);
+    res.json({ success: true, flags });
+  } catch (error) {
+    console.error('Error setting user flags:', error);
+    res.status(500).json({ error: 'Failed to set user flags' });
+  }
 });
 
-app.post('/admin/users/add', authenticateJWT, ensureAdmin, async (req, res) => {
-  const { id } = req.body;
-  await db.run('INSERT OR IGNORE INTO admins (id) VALUES (?)', id);
-  res.json({ success: true });
-});
-
-app.post('/admin/users/remove', authenticateJWT, ensureAdmin, async (req, res) => {
-  const { id } = req.body;
-  await db.run('DELETE FROM admins WHERE id = ?', id);
-  res.json({ success: true });
+app.get('/admin/users/flags/:userId', authenticateJWT, ensureAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await db.get('SELECT user_flags FROM users WHERE id = ?', userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ flags: user.user_flags });
+  } catch (error) {
+    console.error('Error getting user flags:', error);
+    res.status(500).json({ error: 'Failed to get user flags' });
+  }
 });
 
 // ==== ITEMS API ENDPOINTS ====
@@ -1840,7 +1878,6 @@ app.post('/api/listings', authenticateJWT, async (req, res) => {
       req.user.username, // seller - use current username
       req.user.id, // userId - permanent ID
       req.user.id, // sellerId - same as userId for consistency
-      req.user.id, // userId - use authenticated user's permanent ID  
       req.user.avatar || '', // sellerAvatar - use authenticated user's avatar
       Date.now(),
       req.user.username, // IGN field - use current username (for Discord bot compatibility)
@@ -1869,7 +1906,15 @@ app.post('/api/listings', authenticateJWT, async (req, res) => {
     });
   } catch (err) {
     console.error('Error inserting listing into DB:', err);
-    res.status(500).json({ error: 'Failed to save listing' });
+    console.error('Error details:', {
+      message: err.message,
+      code: err.code,
+      errno: err.errno
+    });
+    res.status(500).json({ 
+      error: 'Failed to save listing',
+      details: process.env.NODE_ENV !== 'production' ? err.message : undefined
+    });
   }
 });
 
@@ -2186,6 +2231,7 @@ io.on('connection', (socket) => {
         password_reset_token TEXT,
         password_reset_expires INTEGER,
         auth_type TEXT DEFAULT 'email',
+        user_flags TEXT DEFAULT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
@@ -2232,6 +2278,7 @@ io.on('connection', (socket) => {
       'password_reset_token TEXT',
       'password_reset_expires INTEGER',
       'auth_type TEXT DEFAULT \'email\'',
+      'user_flags TEXT DEFAULT NULL',
       'created_at INTEGER',
       'updated_at INTEGER'
     ];
@@ -2426,6 +2473,7 @@ io.on('connection', (socket) => {
       'combatNecromae TEXT',
       'contactInfo TEXT',
       'notes TEXT',
+      'sellerId TEXT',
     ];
     
     for (const col of columns) {

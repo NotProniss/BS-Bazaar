@@ -113,7 +113,7 @@ function Sidebar({
           color: darkMode ? '#D4AF37' : '#B8860B'
         }}
       >
-        Beta 0.2.5
+        Beta 0.2.6
       </p>
       
       {/* Light/Dark mode toggle */}

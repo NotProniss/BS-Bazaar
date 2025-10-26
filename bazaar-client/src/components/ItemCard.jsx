@@ -152,12 +152,11 @@ function ItemCard(props) {
         {type === "buy" ? "Buying" : "Selling"}
       </div>
       
-      {/* Discord username - always show */}
-      
       {/* Display seller name for listings, current user for previews */}
       <UserLink 
         username={isListing ? (seller || listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
         userId={isListing ? userId : undefined}
+        userFlags={isListing ? listing?.user_flags : undefined}
         className="text-xs text-gray-600 dark:text-gray-300 mt-1 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap"
         title={isListing ? (seller || listing?.seller || "Anonymous") : (loggedInUser || "Anonymous")}
         darkMode={darkMode}

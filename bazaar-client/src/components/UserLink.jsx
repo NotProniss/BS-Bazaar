@@ -2,8 +2,25 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../config';
 
-const UserLink = ({ username, userId, className = '', darkMode = false, ...props }) => {
+const UserLink = ({ username, userId, userFlags, className = '', darkMode = false, ...props }) => {
   const navigate = useNavigate();
+
+  // Parse user flags (comma-separated string to array)
+  const flags = userFlags ? userFlags.split(',').map(f => f.trim()).filter(f => f) : [];
+
+  // Function to get flag styling - box with matching background and text
+  const getFlagStyle = (flag) => {
+    switch (flag) {
+      case 'Admin':
+        return 'bg-red-600 text-white border-red-700';
+      case 'VIP':
+        return 'bg-purple-600 text-white border-purple-700';
+      case 'MVP':
+        return 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black border-yellow-600 font-bold';
+      default:
+        return 'bg-gray-600 text-white border-gray-700';
+    }
+  };
 
   const handleClick = async (e) => {
     e.preventDefault();
@@ -47,17 +64,30 @@ const UserLink = ({ username, userId, className = '', darkMode = false, ...props
   }
 
   return (
-    <span
-      className={`cursor-pointer hover:underline transition-colors duration-200 ${
-        darkMode 
-          ? 'text-yellow-400 hover:text-yellow-300' 
-          : 'text-blue-600 hover:text-blue-800'
-      } ${className}`}
-      onClick={handleClick}
-      title={`View ${username}'s profile`}
-      {...props}
-    >
-      {username}
+    <span className={`flex items-center gap-2 ${className}`} {...props}>
+      {/* User flags - displayed as prefix boxes */}
+      {flags.map(flag => (
+        <span
+          key={flag}
+          className={`text-xs px-2 py-1 rounded border font-medium shadow-sm ${getFlagStyle(flag)}`}
+          title={`${flag} user`}
+        >
+          {flag}
+        </span>
+      ))}
+      
+      {/* Username */}
+      <span
+        className={`cursor-pointer hover:underline transition-colors duration-200 ${
+          darkMode 
+            ? 'text-yellow-400 hover:text-yellow-300' 
+            : 'text-blue-600 hover:text-blue-800'
+        }`}
+        onClick={handleClick}
+        title={`View ${username}'s profile`}
+      >
+        {username}
+      </span>
     </span>
   );
 };
